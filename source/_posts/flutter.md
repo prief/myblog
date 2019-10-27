@@ -503,6 +503,25 @@ tags:
 {% asset_img hybridNav.png 混合导航栈 %}
 
 ## 状态管理
-- 
+- Provider
+  - 官方推荐框架，是InheritWidget的语法糖
+  - 提供了依赖注入的功能，允许widget树灵活处理数据
+  - 可读写的ChangeNotifierProvider/MultiProvider和只读的Provider
+  - Provider.of()可获取资源，但页面其他Widget也会刷新
+  - ConsumerN可通过Builder(context,model,child)只更新依赖的widget提高性能
+- 使用
+  - pubspec.yaml中添加Provider依赖
+  - 封装: 定义需要共享的数据模型，通过混入ChangeNotifier管理听众，模型中调用notifyListeners()通知听众刷新
+  - 注入: 把模型放到widget的父级或更高ChangeNotifierProvider.value(value:SharedModel(),child:Widget())
+  - 读写: Provider.of()/ConsumerN()
+
+## 原生推送
+- ios上使用APNS苹果推送通知服务
+- android上类似Firebase云消息传递机制FCM实现推送托管，大陆通常使用三方推送(极光/友盟)适配
+- 流程
+  - 业务服务器调用APNS/FCM
+  - 消息到达用户终端设备
+  - 设备解析后把消息转给所属应用
+
 
 # 综合应用
