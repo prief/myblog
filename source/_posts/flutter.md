@@ -516,12 +516,428 @@ tags:
   - 读写: Provider.of()/ConsumerN()
 
 ## 原生推送
-- ios上使用APNS苹果推送通知服务
-- android上类似Firebase云消息传递机制FCM实现推送托管，大陆通常使用三方推送(极光/友盟)适配
-- 流程
+- ios
+  - 使用APNS苹果推送通知服务
+  - 为了保证api统一，ios上也使用封装了APNs的第三方服务
+- android
+  - 类似Firebase云消息传递机制FCM(FirebaseCloudMessage)实现推送托管
+  - 大陆通常使用三方推送(极光/友盟)适配
+  - 第三方服务不能享受系统底层的优化，使用自建的长链接通道
+  - 但也是共享所有接入第三方推送的app的推送通道，只要有一个存活就可推送
+- 推送流程
   - 业务服务器调用APNS/FCM
   - 消息到达用户终端设备
   - 设备解析后把消息转给所属应用
+- 极光接入流程
+  - 初始化SDK setup(调用原生接口)
+  - 获取地址id registrationID(调用原生接口)
+  - 注册消息通知 setOpenNotificationHandler(原生回调dart)
+  - 单例模式实现整个应用共享
+  - android
+    - JCommonService是一个后台Service，极光共享长链接通道核心
+    - JPushMessageReceiver是一个BroadcastReceiver可获取推送消息
+    - AndroidManifest.xml中声明上面2个的注册
+    - 收到消息回调后首先启动MainActivity，等待Flutter初始化完成后再回调flutter推送消息
+  - ios
+    - podspec文件引入极光SDKjpush
+    - 用户点击了推送消息，防止是从后台唤醒，要确保flutter初始化好后再回调flutter推送消息
+  - 提供应用推送证书，关联极光应用配置
+    - android注册appkey后根据包名进行注册并在build.gradle中绑定manifestPlaceholders
+    - ios首先要申请推送证书(.p12证书或APNsAuthKey)并在平台配置绑定后工程开启push
 
+## 国际化
+- 本质是语言和地区的差异性配置
+- 资源
+  - 字符串文本
+  - 货币单位
+  - 时间格式
+  - 背景图资源
+- 步骤
+  - 实现LocalizationsDelegate，将所有需要转换的资源声明为其属性
+  - 手动翻译适配
+  - app初始化时，将代理类设置为应用程序的翻译回调
+  - 官方的方案可以先放弃，借鉴Flutter i18n插件
+- Flutteri18n
+  - as中安装此插件
+  - pubspec.yaml中声明flutter_localizations sdk: flutter依赖
+  - res/values/strings_en.arb文件是JSON格式的配置，存放标识符和翻译的键值对
+  - 修改上面的arb文件会自动生成lib/generated/i18n.dart(支持静态映射和动态传参)
+  - 初始化时2个重要参数localizationsDelegates翻译回调和supportedLocales所支持的语言配置
+  - 配置翻译回调时需要GlobalMaterialLocalizations.delegate与GlobalWidgetsLocalizations.delegate是官方widgets本身的翻译回调
+  - S.of(context)直接获取arb文件中翻译的文案
+  - 翻译的代码只能在获取到context的前提下才能生效即MaterialApp的子widget，通过MaterialApp的onGenerateTitle回调设置title的国际化
+  - ios程序有一套自建的语言环境管理机制，默认是英文，为了支持国际化需要额外配置Localization
+  - 原生工程配置
+    - 在flutter框架启动前的配置需要在原生中配置
+    - android中应用名称在AndroidManifest.xml中application的android:label属性
+    - 并且要在android/app/src/main/res中为要支持的语言创建values目录和strings.xml
+    - ios工程中的应用名称是在Info.plist文件中，需要一个字符串资源引用的文件InfoPlist.strings并在Localizations中添加多语言
+
+## 适配屏幕分辨率
+- 适配屏幕旋转
+  - 竖屏模式/横屏模式2套布局方案
+  - OrientationBuilder的builder函数可以回调屏幕状态orientation
+  - MediaQuery.of(context).orientation可以在OrientationBuilder外获取状态
+  - SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);关闭横屏
+- 适配分辨率
+  - 将屏幕空间划分为多个窗格即用原生类似的Fragment/ChildViewController概念抽象独立区块视觉功能
+  - 多窗格布局可以在平板电脑和横屏模式上，实现更好的视觉平衡效果
+  - 页面的实现和区块的实现是相互独立的，所以可以实现区块的复用
+  - MediaQuery.of(context).size.width可获取屏幕宽度
+
+## 编译模式
+- 运行模式
+  - Debug JIT
+  - Release AOT
+  - Profile Release+Profile(Observatory) flutter run --profile
+- 编译模式
+  - JIT 
+    - JustInTime运行时编译
+    - 动态编译/将dart代码编译成中间代码scriptSnapshot最终生成DartKernel(可动态更新)需要在设备上用DartVM解释执行实现widget重建
+    - 可以模拟器和真机运行
+    - 打开assert断言/debug调试/observatory调试/hotReload热重载
+    - 没有优化应用启动速度/代码执行速度/二进制包大小/部署
+    - flutter run --debug
+  - AOT
+    - AheadOfTime运行前编译
+    - 静态编译/生成设备可执行的二进制码
+    - 只能真机运行
+    - 关闭assert断言/debug调试/observatory调试/hotReload热重载
+    - 优化应用启动速度/代码执行速度/二进制包大小/部署
+    - flutter run --release
+- 运行时识别编译模式
+  - 区别
+    - debug模式下打印详细日志，调用开发接口
+    - release模式下记录精简日志，调用生产接口
+  - 识别
+    - 通过断言识别 assert((){ // DoSth4Debug; return true;}()) release下此代码被删除
+    - 通过DartVM提供的编译常数识别 if(kReleaseMode){}else{/ DoSth4Debug;} 代码总会被打包
+- 分离配置环境
+  - 抽象配置并用InheritedWidget封装
+  - 配置多入口(main_dev.dart/main.dart)
+  - 读取配置(运行时通过InheritedWidget将配置部分应用到子widget)
+  - 编译打包(通过不同选项构建不同的安装包flutter run -t|--target main[_dev].dart)
+- 原生配置差异
+  - android: build flavor
+  - ios: 多个build target
+
+## hotReload
+{% asset_img hotReload.png 热重载流程 %}
+- 热重载流程
+  - 扫描工程改动
+  - 增量编译
+  - 推送更新
+  - 代码合并
+  - Widget重建
+- 不支持热重载场景(此场景可以用hotRestart)
+  - 代码编译错误
+  - widget状态无法兼容
+  - 全局变量和静态属性的更改
+  - main()里的更改
+  - initState()里的更改
+  - 枚举和泛类型的更改
+
+## 工具链优化
+- 输出日志
+  - print() 涉及IO操作，耗费系统资源
+  - debugPrint() 可以定制打印能力如debugPrint = (String msg,{int wrapWidth}{})
+- 断点调试
+  - 标记断点
+  - 调试应用
+  - 查看信息
+- 布局调试
+  - DebugPainting
+    - 布局边界展示辅助线
+    - debugPaintSizeEnabled=true
+  - FlutterInspector 查看具体信息
+
+## 性能优化
+- 性能问题
+  - GPU线程问题
+    - 涉及widget裁剪/蒙层等多视图叠加渲染可main中使用checkerboardOffscreenLayers=true检查
+    - 缺少缓存导致静态图像反复绘制可main中使用checkerboardRasterCacheImages=true检查，有问题可使用RepaintBoundary缓存
+  - UI线程问题(cpu)
+    - OpenDevTools
+    - Performance性能工具
+      - 可记录cpu帧图(火焰图)展示cpu调用栈表示cpu繁忙程度
+      - y轴表示调用栈，每一层都是一个函数，调用栈越深火焰越高，底部就是正在执行的函数，上方是父函数
+      - x轴表示单位时间，在x轴越长表示执行时间越长，平顶表示函数可能存在性能问题
+    - 有问题可以使用Isolate或compute()将耗时的操作移到主Isolate外完成
+- 性能图层
+  - PerformanceOverlay
+  - 为采集真实的环境需要使用Profile分析模式
+  - 模拟器使用x86指令集/真机使用ARM指令集
+  - flutter run --profile
+  - 性能图层展示了最近300帧的表现
+  - 为了保证60Hz的刷新频率，每一帧都要小于16ms(1/60)
+- 经验
+  - 控制build方法耗时，将widget拆小越小越可复用
+  - 不要使用widget半透明效果，而使用图片代替
+  - 列表采用懒加载
+
+## 自动化测试
+- 单元测试
+  - 对软件中最小可测试单元(语句/函数/方法/类)进行验证
+  - pubspec.yaml中需要依赖test包 dev_dependencies: test:
+  - 测试用例
+    - 定义 test()/group()测试用例封装类
+    - 执行
+    - 验证 expect()将执行结果与预期进行比较
+  - 模拟mock
+    - pubspec.yaml中依赖mockito
+    - Mock类可模拟任何外部依赖
+    - when().thenAnswer()当符合条件时进行注入
+- UI测试
+  - pubspec.yaml中使用flutter_test包提供核心框架
+  - testWidgets('name',(tester) async{})测试用例封装类
+  - await tester.pumpWidget(MyApp())触发MyApp渲染
+  - find.text(str)查找字符串文本为str的widget
+  - find.byIcon(Icons.add)查找到按钮控件
+  - await tester.tap()点击
+  - await tester.pump()强制渲染刷新
 
 # 综合应用
+## 生产异常捕获和信息采集
+- flutter异常
+  - try/catch捕获异常
+  - dart程序不强制要求必须处理异常(dart用事件循环机制来运行任务，各任务状态独立)
+- dart异常
+  - App异常
+    - 同步异常 通过try/catch捕获
+    - 异步异常 通过Future的catchError语句捕获
+    - 集中管理 通过Zone.runZoned Zone表示代码执行的范围相当于沙盒,onError回调捕获错误，统一处理异常可以把main()的runApp()放到Zone中
+```
+
+runZoned<Future<Null>>(() async {
+  runApp(MyApp());
+}, onError: (error, stackTrace) async {
+ //Do sth for error
+});
+
+```
+  - Framework异常
+    - 触发了底层的try/catch，有异常就会渲染ErrorWidget
+    - 为了提高用户体验需要重写ErrorWidget.builder()自定义错误页面
+```
+
+ErrorWidget.builder = (FlutterErrorDetails flutterErrorDetails){
+  return Scaffold(
+    body: Center(
+      child: Text("Custom Error Widget"),
+    )
+  );
+};
+
+```
+  - FlutterError
+    - 为了集中处理框架异常
+    - FlutterError.onError在接收到框架异常时执行相应的回调
+    - 可以把flutter框架的异常统一转发到当前Zone里统一处理，这样就可以捕获应用所有异常
+```
+
+FlutterError.onError = (FlutterErrorDetails details) async {
+  //转发至Zone中
+  Zone.current.handleUncaughtError(details.exception, details.stack);
+};
+
+runZoned<Future<Null>>(() async {
+  runApp(MyApp());
+}, onError: (error, stackTrace) async {
+ //Do sth for error
+});
+
+```
+- 异常上报
+  - 三方服务厂商
+    - 友盟
+    - bugly(社区比较活跃)
+    - sentry(开源)
+  - bugly接入
+    - dart接口封装(实现单例的FlutterCrashPlugin的setup/postException的方法通道)
+    - ios
+      - flutter_crash_plugin.podspec引入BuglySDK
+      - 实现原生接口FlutterCrashPlugin
+    - android
+      - build.gradle引入BuglySDK(crashreport和nativecrashreport)
+      - 实现原生接口FlutterCrashPlugin
+      - AndroidManifest.xml中配置网络/日志读取等的权限注册
+    - 关联应用配置
+      - ios只需要调用dart的setup就可以
+      - android需要build.gradle中增加NDK架构支持和AndroidP的network_security_config.xml允许http传输数据并在AndroidManifest.xml中新增同名的网络安全配置
+    - 接入插件
+      - pubspec.yaml中添加dependencies
+      - main()里拦截到应用所有的错误后调用上报接口
+  - 底层异常
+    - flutter只能拦截dart层的异常
+    - engine层大部分代码都是C++写的，一旦有异常需要借助原生系统的Crash监听机制
+    - bugly也可以自动收集原生代码的crash，开发者可以把flutterEngine层的符号表下载下来，使用安卓的ndk-stack或ios的symbolicatecrash或atos命令对对crash堆栈进行解析得出引擎层崩溃的代码
+
+## 线上质量
+- 页面异常率
+  - 异常发生次数/页面pv数
+```
+
+// 异常发生次数
+int exceptionCount = 0; 
+Future<Null> _reportError(dynamic error, dynamic stackTrace) async {
+  exceptionCount++; //累加异常次数
+  FlutterCrashPlugin.postException(error, stackTrace);
+}
+
+Future<Null> main() async {
+  FlutterError.onError = (FlutterErrorDetails details) async {
+    //将异常转发至Zone
+    Zone.current.handleUncaughtError(details.exception, details.stack);
+  };
+
+  runZoned<Future<Null>>(() async {
+    runApp(MyApp());
+  }, onError: (error, stackTrace) async {
+    //拦截异常
+    await _reportError(error, stackTrace);
+  });
+}
+
+// 页面打开次数
+int totalPV = 0;
+//导航监听器
+class MyObserver extends NavigatorObserver{
+  @override
+  void didPush(Route route, Route previousRoute) {
+    super.didPush(route, previousRoute);
+    totalPV++;//累加PV
+  }
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return  MaterialApp(
+    //设置路由监听
+       navigatorObservers: [
+         MyObserver(),
+       ],
+       home: HomePage(),
+    ); 
+  }   
+}
+
+
+// 页面异常率计算
+
+double pageException() {
+  if(totalPV == 0) return 0;
+  return exceptionCount/totalPV;
+}
+
+```
+- 页面帧率
+  - FPS(60Hz，因为VSync信号周期就是每秒60次)
+  - window.onReportTimings()回调最近绘制帧所耗费的时间
+  - FPS = 60 * 实际渲染的帧数 / 本来应该渲染的帧数
+```
+
+import 'dart:ui';
+
+var orginalCallback;
+
+void main() {
+  runApp(MyApp());
+  //设置帧回调函数并保存原始帧回调函数
+  orginalCallback = window.onReportTimings;
+  window.onReportTimings = onReportTimings;
+}
+
+//仅缓存最近25帧绘制耗时
+const maxframes = 25;
+final lastFrames = List<FrameTiming>();
+//基准VSync信号周期
+const frameInterval = const Duration(microseconds: Duration.microsecondsPerSecond ~/ 60);
+
+void onReportTimings(List<FrameTiming> timings) {
+  lastFrames.addAll(timings);
+  //仅保留25帧
+  if(lastFrames.length > maxframes) {
+    lastFrames.removeRange(0, lastFrames.length - maxframes);
+  }
+  //如果有原始帧回调函数，则执行
+  if (orginalCallback != null) {
+    orginalCallback(timings);
+  }
+}
+
+double get fps {
+  int sum = 0;
+  for (FrameTiming timing in lastFrames) {
+    //计算渲染耗时
+    int duration = timing.timestampInMicroseconds(FramePhase.rasterFinish) - timing.timestampInMicroseconds(FramePhase.buildStart);
+    //判断耗时是否在Vsync信号周期内
+    if(duration < frameInterval.inMicroseconds) {
+      sum += 1;
+    } else {
+      //有丢帧，向上取整
+      int count = (duration/frameInterval.inMicroseconds).ceil();
+      sum += count;
+    }
+  }
+  return lastFrames.length/sum * 60;
+}
+
+
+```
+- 页面加载时长
+```
+
+class MyHomePage extends StatefulWidget {
+  int startTime;
+  int endTime;
+  MyHomePage({Key key}) : super(key: key) {
+    //页面初始化时记录启动时间
+    startTime = DateTime.now().millisecondsSinceEpoch;
+  }
+  @override
+  _MyHomePageState createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  @override
+  void initState() {
+    super.initState();
+    //通过帧绘制回调获取渲染完成时间
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.endTime = DateTime.now().millisecondsSinceEpoch;
+      int timeSpend = widget.endTime - widget.startTime;
+      print("Page render time:${timeSpend} ms");
+    });
+  }
+  ...
+}
+
+```
+
+## 工程架构
+- 组件化
+  - 独立的功能进行拆分
+  - 可以是一个包/页面/UI控件/常用函数
+  - 基本原则
+    - 单一性原则，清晰自己的边界专注做自己单一的事
+    - 抽象化原则，抽象接口设计，变化因子尽量自己维护
+    - 稳定性原则，外部依赖尽量稳定，如果不稳定考虑下一条原则
+    - 自完备性原则，尽量自给自足减少外部依赖，除非上一条满足
+  - 实施步骤
+    - 剥离并实现基础功能
+      - 网络请求
+      - 组件中间件
+      - 第三方库封装(尽量不直接依赖外部代码)
+      - UI组件
+    - 抽象并划分业务模块
+      - 粒度可先粗后细
+      - 后续分步迭代
+    - 最小化服务能力
+- 平台化
+  - 组件化的升级，在组件化的基础上增加了统一分层和依赖治理的概念
+  - 组件化关注组件的独立性，平台化关注组件之间的关系合理性(尽量符合单向依赖原则)
+  - 如果下层确实要依赖上层可以增加中间层(EventBus/Provider/Router)
+
+## 构建打包发布环境
+- travisCI
