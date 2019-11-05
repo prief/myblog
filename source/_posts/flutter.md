@@ -941,3 +941,42 @@ class _MyHomePageState extends State<MyHomePage> {
 
 ## 构建打包发布环境
 - travisCI
+- ios逆向之重签名
+```
+
+# 列出所有开发者证书文件
+security find-identity -p codesigning -v
+
+# 找一个开发环境配置文件生成entitlements.plist
+security cms -D -i XX.mobileprovision  > profile.plist
+/usr/libexec/PlistBuddy -x -c 'Print :Entitlements' profile.plist > entitlements.plist
+cat entitlements.plist
+
+# 把准备好的开发环境配置文件复制到XX.app文件夹下
+cp XX.mobileprovision Payload/XX.app/embedded.mobileprovision
+
+# 修改包Info.plist中的Bundle Identifier与配置文件中的Bundle Identifier保持一致
+/usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier com.XX.XX" Payload/XX.app/Info.plist
+
+# 移除之前的签名文件夹
+rm -rf Payload/XX.app/_CodeSignature
+
+# 重签名framework
+/usr/bin/codesign --force --sign 84A4B9F1F902462CC33D01E9FF72C1BA04A97653 --entitlements entitlements.plist /Payload/XX.app/Frameworks/JSONModel.framework
+
+# 重签名app执行文件
+/usr/bin/codesign --force --sign 84A4B9F1F902462CC33D01E9FF72C1BA04A97653 --entitlements entitlements.plist Payload/XX.app/XX
+
+# 查看app签名信息
+codesign -vv -d Payload/XX.app
+
+# 安装调试
+ios-deploy -d -b Payload/XX.app
+
+# 打包
+zip -qry ppdest.ipa Payload
+rm -rf Payload/
+
+```
+
+## 构建混合开发框架
