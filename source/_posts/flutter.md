@@ -980,3 +980,19 @@ rm -rf Payload/
 ```
 
 ## 构建混合开发框架
+- 混合开发
+  - 原生负责提供容器和基础能力支撑
+  - flutter负责业务和大部分渲染工作
+- 混合开发工程架构
+  - 依赖分层管理
+    - 原生对flutter的依赖抽象为依赖flutter模块封装的原生组件
+    - flutter对原生的依赖抽象为依赖插件封装的原生行为
+  - flutter模块定义为原生工程的独立业务层，以原生基础业务层向flutter模块提供业务通用能力，原生基础能力层向flutter模块提供基础功能支撑 
+{% asset_img projectArch.png 混合开发工程架构 %}
+- 混合开发工作模式
+{% asset_img workflow.png 混合开发工作流 %}
+{% asset_img cmd.png flutter命令行 %}
+
+- 原生插件依赖管理
+  - ios的AFNetworking
+  - android的OkHttp
