@@ -258,6 +258,8 @@ tags:
   - ios中通常将配置信息预写到plist中通过单例来控制
   - android中通常将配置信息写到style属性值的xml中，通过activity的setTheme切换
   - 前端通过切换css即可实现
+- Theme(data:ThemeData(),child:MyWidget())
+- Theme(data:Theme.of(context).copyWith(),child:MyWidget())
 - flutter使用ThemeData统一管理
   - app全局范围 MaterialApp.theme
   - widget局部范围 Theme.data
@@ -996,3 +998,15 @@ rm -rf Payload/
 - 原生插件依赖管理
   - ios的AFNetworking
   - android的OkHttp
+- flutter模块工程依赖管理
+  - 使用flutter插件(pubspec.yaml)
+  - 模块工程的ios构建产物封装以提供原生ios工程依赖管理
+  - 模块工程的android构建产物封装以提供原生android工程依赖管理
+  - flutter模块工程把所有原生的依赖都交给了原生工程管理所以其构建产物并不会携带原生插件的封装实现，我们需要遍历模块工程所使用的原生依赖组件，并为他们逐一生成插件代码对应的原生组件封装
+
+## 实践
+- TabBar
+  - TabBar 默认会在 widget 树中向上寻找离它最近的一个 DefaultTabController节点作为自己的 TabController
+  - 如果手动创建 TabController，那么必须将它作为参数传给 TabBar
+- FocusScope.of(context).requestFocus(myFocusNode)
+- flutter drive --target=test_driver/app.dart
