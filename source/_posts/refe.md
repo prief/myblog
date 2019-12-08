@@ -1,0 +1,120 @@
+---
+title: refe
+date: 2019-12-08 09:52:17
+tags:
+---
+
+## 开篇
+- 学习
+  - 0基础的可以学习《js高级程序设计》《精通css》，MDN网站等
+  - 进阶学习方法
+    - 建立知识架构
+      - 逻辑性和完备性
+      - 任何语言都是用规定的文法表达特定的语义最终操作运行时的过程
+    - 追本溯源
+- js知识架构
+  - 文法
+    - 词法
+    - 语法
+  - 语义
+  - 运行时（程序=数据结构+算法）
+    - 数据结构
+      - 类型(7种基本类型和7种语言类型)
+      - 实例(内置对象等)
+    - 算法（执行过程）
+      - 程序与模块
+      - 事件循环
+      - 微任务
+      - 函数/语句的执行
+- html/css知识架构
+  - html
+    - 元素(功能)
+      - 文档元信息(meta/link/style/base)
+      - 语义相关内容(section/nav)
+      - 链接(文档内/外链接)
+      - 替换型元素(img/audio/video)
+      - 表单(input/button)
+      - 表格(table/thead)
+      - 总集
+    - 语言
+      - 实体
+      - 命名空间
+      - 补充标准ARIA
+    - 补充标准
+  - css
+    - 语言
+      - @rule
+      - 选择器
+      - 单位
+    - 功能
+      - 布局(正常流/弹性布局)
+      - 绘制(颜色和形状/文字等)
+      - 交互(动画和其他交互)
+- 浏览器实现原理和api
+  - 实现原理
+    - 解析
+    - 构建DOM
+    - 计算CSS
+    - 渲染、合成和绘制
+  - api
+    - DOM
+    - CSSOM
+    - 事件
+    - api总集和
+- 前端工程实践
+  - 性能
+  - 工具链
+  - 持续集成
+  - 搭建系统
+  - 架构和基础库
+## js
+### 类型
+- 7种语言类型
+  - Undefined
+    - undefined
+  - Null
+    - null
+  - String
+    - 最大长度2^53-1，是指字符串的UTF16编码长度
+    - 通常使用utf8和utf16
+    - unicode码点通常U+?表示，0-65536码点称为基本字符区域BMP
+  - Number
+    - 有精度限制，符合双精度浮点数规则
+    - NaN占用了一个数字
+    - Infinity无穷大
+    - -Infinity负无穷大
+    - 区分是+0还是-0的方式就是检测1/x是Infinity还是-Infinity
+    - 比较浮点数可以通过两个数的差的绝对值是否小于最小精度值
+    - Math.abs(0.1 + 0.2 - 0.3) <= Number.EPSILON
+  - Boolean
+    - true
+    - false
+  - Object
+    - .运算符提供了装箱操作，在基础类型上构造临时对象
+  - Symbol
+    - 一切非字符串的对象key的集合，ES6中整个对象系统被Symbol重塑
+    - Symbol可以有字符串类型的描述，但即使描述相同Symbol也不相等
+    - var mySymbol = Symbol('label'), 使用new调用会报错
+- 类型转换
+  - StringToNumber
+    - 支持二进制/八进制/十进制/十六进制
+    - 支持正负号和科学计数法
+    - parseInt建议传入第二个进制参数，parseFloat只支持十进制
+  - 装箱转换
+    - 基本类型转换成对应的对象
+    - Object()显示装箱，函数的call方法可以强迫产生装箱
+    - 装箱机制会频繁产生临时对象，性能要求高时应避免装箱操作
+    - var symbolObject = (function(){return this;}).call(Symbol("a"))
+    - typeof symbolObject 为 object
+    - symbolObject.constructor 为 Symbol
+    - symbolObject instanceof Symbol也为true
+  - 拆箱转换
+    - ToPrimitive()是对象类型到基本类型的转换
+    - 根据运算上下文尝试调用valueOf()和toString()进行拆箱
+    - 如果都不存在，或返回的不是基本类型则会产生类型错误TypeError
+    - ES6可以显示指定o[Symbol.toPrimitive]=()=>{return ''}
+    - ES6显示指定后toString()和valueOf()都不会被调用了
+
+## html/css
+## 浏览器
+## 综合应用
