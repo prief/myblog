@@ -17,6 +17,7 @@ tags:
 - service
   - 通过labelSelector选择后端服务
   - 通过clusterIp暴露服务
+- https://k8s.imroc.io/
 ## 架构设计
 - master
   - etcd
@@ -120,6 +121,7 @@ EOF
 cat <<EOF > /etc/docker/daemon.json
 {
     "graph": "/var/lib/docker",
+    "registry-mirrors": ["https://4vo01fev.mirror.aliyuncs.com"],
     "exec-opts": ["native.cgroupdriver=systemd"],
     "log-driver": "json-file",
     "log-opts": {
@@ -310,7 +312,7 @@ backend https_sri
   - kubectl exec -n kube-system etcd-m1 -- etcdctl --cacert="/etc/kubernetes/pki/etcd/ca.crt" --cert="/etc/kubernetes/pki/etcd/peer.crt" --key="/etc/kubernetes/pki/etcd/peer.key" --endpoints=https://10.18.3.178:2379 member list #查看etcd集群
   - journalctl -f #查看日志
 ## 可用性测试
-- kubectl apply -f nginx-ds.yaml
+- kubectl apply -f nginx-ds.yaml  
 - ping podIp
 - curl svcIp:svcPort
 - curl nodeIp:nodePort
@@ -411,6 +413,15 @@ kubectl describe secret -n kubernetes-dashboard $(kubectl get secret -n kubernet
   - hostname
   - hostnamectl set-hostname name
   - vi /etc/hosts
+- rhel更换yum
+  - rpm -qa | grep yum | xargs rpm -e --nodeps
+  - mkdir yumrpm && cd yumrpm
+  - wget https://mirrors.aliyun.com/centos/7/os/x86_64/Packages/yum-3.4.3-163.el7.centos.noarch.rpm
+  - wget https://mirrors.aliyun.com/centos/7/os/x86_64/Packages/yum-metadata-parser-1.1.4-10.el7.x86_64.rpm
+  - wget https://mirrors.aliyun.com/centos/7/os/x86_64/Packages/yum-utils-1.1.31-52.el7.noarch.rpm
+  - wget https://mirrors.aliyun.com/centos/7/os/x86_64/Packages/yum-updateonboot-1.1.31-52.el7.noarch.rpm
+  - wget https://mirrors.aliyun.com/centos/7/os/x86_64/Packages/yum-plugin-fastestmirror-1.1.31-52.el7.noarch.rpm
+  - rpm -ivh yum*
 - 安装依赖包
   - wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
   - yum install -y epel-release && yum clean all && yum makecache
