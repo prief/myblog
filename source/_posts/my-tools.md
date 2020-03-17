@@ -32,3 +32,11 @@ tags:
 # ios
 - homebrew
 - xcode
+
+# linux
+- split
+  - -d 以数字自动命名
+  - -b 按大小切分 100M split -b 1000M -d filename prefix
+  - -l 按行数切分 1000 split -l 10000 -d filename prefix
+- git
+{% asset_img devopsGitFlow.png devopsGit工作流 %}
