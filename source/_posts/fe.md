@@ -533,6 +533,10 @@ document.addEventListener('scroll', better_scroll)
         - sass函数将设计稿尺寸的像素单位转换为vw单位
         - 所有尺寸全部转换为vw包括文字
         - 1px使用transform的scale实现
+        - vw缺点就是会无限放大或缩小
+      - vw + rem
+        - 根元素的字体大小为vw，同时限制最大值/最小值并配合body最大宽/最小宽实现断点
+        - 其他元素统一使用rem单位
 ```
 
 // iPhone 6尺寸作为设计稿基准
@@ -541,10 +545,72 @@ $vw_base: 375;
     @return ($px / $vm_base) * 100vw;
 }
 
+
+.mod_grid {
+    position: relative;
+    &::after {
+        // 实现1物理像素的下边框线
+        content: '';
+        position: absolute;
+        z-index: 1;
+        pointer-events: none;
+        background-color: #ddd;
+        height: 1px;
+        left: 0;
+        right: 0;
+        top: 0;
+        @media only screen and (-webkit-min-device-pixel-ratio: 2) {
+            -webkit-transform: scaleY(0.5);
+            -webkit-transform-origin: 50% 0%;
+        }
+    }
+    ...
+}
+
+
+// vw+rem
+// rem 单位换算：定为 75px 只是方便运算，750px-75px、640-64px、1080px-108px，如此类推
+$vw_fontsize: 75; // iPhone 6尺寸的根元素大小基准值
+@function rem($px) {
+     @return ($px / $vw_fontsize ) * 1rem;
+}
+// 根元素大小使用 vw 单位
+$vw_design: 750;
+html {
+    font-size: ($vw_fontsize / ($vw_design / 2)) * 100vw; 
+    // 同时，通过Media Queries 限制根元素最大最小值
+    @media screen and (max-width: 320px) {
+        font-size: 64px;
+    }
+    @media screen and (min-width: 540px) {
+        font-size: 108px;
+    }
+}
+// body 也增加最大最小宽度限制，避免默认100%宽度的 block 元素跟随 body 而过大过小
+body {
+    max-width: 540px;
+    min-width: 320px;
+}
 ```
 - 滑屏应用开发（活动营销页面）
+  - swiper
+  - 自己实现
+    - 手势动作判断
+    - 执行相应动画
 - 动效开发（活动营销页面）
+  - transition 补间动画 
+  - animation 逐帧动画+补间动画
+  - gif
+  - js控制关键帧sprite的background-position
+  - canvas库（createJS，pixi.js）
+  - svg+SMIL
+    - 声明视窗 <svg width=100 height=100 ></svg>
+    - 绘制路径 <path d="指令数据" style="填充描边"></path>
+    - 绘制图形 <circle cx="" cy="" r="" style="" />
+    - 添加动画 <animateMotion>
+    - SMIL synchronizedMultimediaIntegrationLanguage同步多媒体集成语言，主要用作交互
 
+    
 #### 软技能
 - 健身
 - 理财
