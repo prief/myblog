@@ -23,6 +23,17 @@ tags: webpack
   - npm init -y
   - npm i -D webpack webpack-cli
   - ./node_modules/.bin/webpack -v
+- 模块路径解析
+  - 绝对路径（不推荐）
+  - 相对路径
+    - 查找相对路径下的同名的文件或目录
+    - 是文件则直接加载
+    - 是目录则查找目录下的package.json中的main字段
+    - 有则按其加载
+    - 没有main字段或没有package.json则加载index.js
+  - 模块名
+    - 查找当前目录/上级目录中node_modules中的同名目录
+    - 查找全局node_modules中的模块
 
 ## 基础配置
 - 基础
@@ -45,6 +56,11 @@ tags: webpack
     - '[hash]' 对应文件的hash
 - loaders
   - 本质是一个函数，接收源文件作为参数输出转换后的结果
+  - 执行顺序
+    - 同一个rule中多个loader从后到前执行
+    - 多个loader匹配时用enforce:pre|post约定顺序
+    - 行内loader，在require('loader1!./file.json')
+    - 所有的loader按照前置loader/行内loader/普通loader/后置loader顺序执行
   - babel-loader
     - 解析ES6/7
     - 需要安装@babel/core @babel/preset-env @babel/proposal-class-properties等
@@ -74,6 +90,18 @@ tags: webpack
   - UglifyjsWebpackPlugin
 
 ## 高级配置
+- 环境差异
+  - module.exports=(env,argv)=>{console.log(argv.mode)}
+  - 生产环境
+    - 压缩资源
+    - 分离资源
+  - 开发环境
+    - debug
+    - hotReload
+  - 配置拆分
+    - base.js
+    - dev.js
+    - prod.js
 - 构建监听
   - webpack 命令行传 --watch
   - webpack.config.js中 watch:true
@@ -85,13 +113,17 @@ tags: webpack
   - webpack.config.js
     - mode: 'development'
     - plugins: [new webpack.HotModuleReplacementPlugin()]
-    - devServer:{hot:true,contentBase:'./dist'}
+    - devServer:{hot:true,contentBase:'./dist',before(app){app.get("path",(req,res)=>{res.json({})})},proxy:{"/api":{target:'',pathRewrite:{}}}}
   - WDS灵活定制版WDM webapck-dev-middleware
   - HMR 
     - 由compiler把源码编译成bundle和HMR的patch
     - bundle由本地的bundleServer返回给浏览器
     - HMR的patch由本地的HMRServer(WebSockt)返回浏览器的HMRRuntime
     - 浏览器执行bundle和patch执行代码
+    - 核心api
+      - module.hot
+      - module.hot.accept("指定模块",()=>{})
+      - module.hot.dispose((data)=>{}) #当前模块
 - 文件指纹
   - hash 和整个项目有关，只要项目内有变化hash就变，文件处理也可以用[hash:8]
   - chunkhash 不同的entry会生成不同的chunkhash，常用于js，常设置在output.filename中[chunkhash:8]
@@ -100,6 +132,11 @@ tags: webpack
   - html 使用html-webpack-plugin的minify对象属性
   - css 使用optimize-css-assets-webpack-plugin和cssnano
   - js 内置了uglifyjs-webpack-plugin
+- 按需加载
+  - import(/* webpackChunkName: "lodash" */ 'lodash').then((_) => {})
+  - webpackChunkName作为注释会告知webpack动态加载模块的名称，配合output.chunkFilename指定chunk输出的文件名，否则会以简单的数字标示
+  - 需要syntax-dynamic-import这个babel插件处理import()
+  - 按需动态加载的import()语法依赖promise，对于低版本的要promise的polyfill
 - postcss
   - autoprefixer
     - o presto
@@ -209,9 +246,10 @@ const {entry,htmlWebpackPlugins} = setMPA()
   - 把模块中没被引用的方法在uglify阶段去除掉
   - 使用
     - 必须是ES6的语法，不能用在CommonJS，ES6可以静态分析
-    - 在.babelrc里设置module:false即可
+    - 在.babelrc里设置module:false把模块的静态分析交给webpack处理
+    - 对class类的treeShaking需要在.babelrc里配置loose:true
     - mode为production情况下默认开启了此功能
-    - 要求导出的函数不能有副作用，否则也会失效
+    - 要求导出的函数不能有副作用，否则也会失效,即包的package.json.sideEffects:false声明
   - 原理
     - DCE dead code elimination 无用代码擦除
       - 代码不可到达
