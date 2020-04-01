@@ -815,6 +815,9 @@ hook1.call(1,2,3)
   - loader-runner可以在不安装webpack情况下运行loaders
   - webpack也使用loader-runner执行loader
   - 开发中也可以用loader-runner进行loader的开发和调试
+- pitchLoader
+  - 可以跳过loader的处理
+  - 实现简单，可以更灵活的定义loader的执行
 - 实战
 ```
 mkdir raw-loader && cd raw-loader
