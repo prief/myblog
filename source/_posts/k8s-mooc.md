@@ -5,6 +5,7 @@ tags:
 ---
 
 # k8s快速入门
+
 ## 核心概念
 - kubernetes 舵手
 - image
@@ -18,6 +19,7 @@ tags:
   - 通过labelSelector选择后端服务
   - 通过clusterIp暴露服务
 - https://k8s.imroc.io/
+
 ## 架构设计
 - master
   - etcd
@@ -28,6 +30,7 @@ tags:
   - kubelet
   - kube-proxy
   - docker
+
 ## 认证授权
 - https
   - ssl/tls
@@ -63,7 +66,8 @@ tags:
   - AlwaysAdmit
   - AlwaysDeny
   - ServiceAccount
-  - DenyEscalatingExec
+  - DenyEscolatingExec
+
 ## 集群搭建方案对比
 - kubeadm
   - 优雅，几乎所有组件都在pod中
@@ -76,7 +80,9 @@ tags:
   - 支持高可用
   - 升级方便
   - 证书、配置等需要一步步操作
+
 # kubeadm方式搭建
+
 ## 环境准备
 - 统一主机名
   - hostname

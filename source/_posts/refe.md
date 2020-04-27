@@ -4,117 +4,349 @@ date: 2019-12-08 09:52:17
 tags:
 ---
 
-## 开篇
-- 学习
-  - 0基础的可以学习《js高级程序设计》《精通css》，MDN网站等
-  - 进阶学习方法
-    - 建立知识架构
-      - 逻辑性和完备性
-      - 任何语言都是用规定的文法表达特定的语义最终操作运行时的过程
-    - 追本溯源
-- js知识架构
-  - 文法
-    - 词法
-    - 语法
-  - 语义
-  - 运行时（程序=数据结构+算法）
-    - 数据结构
-      - 类型(7种基本类型和7种语言类型)
-      - 实例(内置对象等)
-    - 算法（执行过程）
-      - 程序与模块
-      - 事件循环
-      - 微任务
-      - 函数/语句的执行
-- html/css知识架构
-  - html
-    - 元素(功能)
-      - 文档元信息(meta/link/style/base)
-      - 语义相关内容(section/nav)
-      - 链接(文档内/外链接)
-      - 替换型元素(img/audio/video)
-      - 表单(input/button)
-      - 表格(table/thead)
-      - 总集
-    - 语言
-      - 实体
-      - 命名空间
-      - 补充标准ARIA
-    - 补充标准
-  - css
-    - 语言
-      - @rule
-      - 选择器
-      - 单位
-    - 功能
-      - 布局(正常流/弹性布局)
-      - 绘制(颜色和形状/文字等)
-      - 交互(动画和其他交互)
-- 浏览器实现原理和api
-  - 实现原理
-    - 解析
-    - 构建DOM
-    - 计算CSS
-    - 渲染、合成和绘制
-  - api
-    - DOM
-    - CSSOM
-    - 事件
-    - api总集和
-- 前端工程实践
-  - 性能
-  - 工具链
-  - 持续集成
-  - 搭建系统
-  - 架构和基础库
-## js
-### 类型
-- 7种语言类型
-  - Undefined
-    - undefined
-  - Null
-    - null
-  - String
-    - 最大长度2^53-1，是指字符串的UTF16编码长度
-    - 通常使用utf8和utf16
-    - unicode码点通常U+?表示，0-65536码点称为基本字符区域BMP
-  - Number
-    - 有精度限制，符合双精度浮点数规则
-    - NaN占用了一个数字
-    - Infinity无穷大
-    - -Infinity负无穷大
-    - 区分是+0还是-0的方式就是检测1/x是Infinity还是-Infinity
-    - 比较浮点数可以通过两个数的差的绝对值是否小于最小精度值
-    - Math.abs(0.1 + 0.2 - 0.3) <= Number.EPSILON
-  - Boolean
-    - true
-    - false
-  - Object
-    - .运算符提供了装箱操作，在基础类型上构造临时对象
-  - Symbol
-    - 一切非字符串的对象key的集合，ES6中整个对象系统被Symbol重塑
-    - Symbol可以有字符串类型的描述，但即使描述相同Symbol也不相等
-    - var mySymbol = Symbol('label'), 使用new调用会报错
-- 类型转换
-  - StringToNumber
-    - 支持二进制/八进制/十进制/十六进制
-    - 支持正负号和科学计数法
-    - parseInt建议传入第二个进制参数，parseFloat只支持十进制
-  - 装箱转换
-    - 基本类型转换成对应的对象
-    - Object()显示装箱，函数的call方法可以强迫产生装箱
-    - 装箱机制会频繁产生临时对象，性能要求高时应避免装箱操作
-    - var symbolObject = (function(){return this;}).call(Symbol("a"))
-    - typeof symbolObject 为 object
-    - symbolObject.constructor 为 Symbol
-    - symbolObject instanceof Symbol也为true
-  - 拆箱转换
-    - ToPrimitive()是对象类型到基本类型的转换
-    - 根据运算上下文尝试调用valueOf()和toString()进行拆箱
-    - 如果都不存在，或返回的不是基本类型则会产生类型错误TypeError
-    - ES6可以显示指定o[Symbol.toPrimitive]=()=>{return ''}
-    - ES6显示指定后toString()和valueOf()都不会被调用了
+### 重学
+#### 课程目录
+- 重学
+  - 学习方法
+  - 构建知识体系
+  - 工程体系
+- 重学js
+  - 编程语言通识与js语言设计
+  - 词法/类型
+  - 表达式/类型转换
+  - 语句
+- 重学浏览器工作原理
+  - http协议/语法词法分析
+  - css计算/排版/渲染/合成
+- 重学css
+  - css基本语法
+  - 排版与排版相关属性/绘制与绘制相关属性
+  - css动画
+- 重学html
+  - html语言与扩展
+  - html语义
+- 重学浏览器api
+  - DOMAPI/事件机制
+  - 其他API/总结
+- 编程与算法训练
+  - TicTacToe/井字棋
+  - 寻路问题
+  - 点击区域与括号匹配wildcard
+  - promise与异步编程
+  - 正则表达式与文本处理
+  - proxy与双向绑定
+  - 使用Range实现DOM操作
+  - 使用CSSOM实现视觉交互
+  - 解析一个四则运算的表达式
+- 组件化
+  - 组件的基本知识/轮播组件
+  - 手势与动画
+  - 为组件添加JSX
+  - 轮播组件的改造(生命周期/状态/属性/事件)
+  - Tab组件和List组件
+  - vue风格的SFC
+- 工具链
+  - 整体理解工具链的设计
+  - 目录结构和初始化工具
+  - 设计并实现一个构建工具与调试工具
+  - 设计并实现一个单元测试工具
+- 发布系统
+  - 实现一个线上web服务
+  - 实现一个发布系统
+  - gitHook与lint
+  - 使用无头浏览器与DOM检查
 
-## html/css
-## 浏览器
-## 综合应用
+#### 前端技能模型
+- 基础能力(刻意练习)
+  - 编程能力，解决业务难的问题
+  - 架构能力，解决业务大的问题
+  - 工程能力，解决人协作的问题
+- 前端知识(建立知识体系)
+  - html
+  - css
+  - js
+- 领域知识(实践中学习)
+
+#### 学习方法
+- 整理法
+  - 关系
+    - 顺序关系
+      - 编译1 词法分析
+      - 编译2 语法分析
+      - 编译3 代码优化
+      - 编译4 代码生成
+    - 组合关系(css rule)
+      - 选择器
+      - 属性
+      - 值
+    - 维度关系
+      - 文法
+      - 语义
+      - 运行时
+    - 分类关系
+  - 完备性
+- 追溯法
+  - 源头(论文/杂志)
+  - 标准和文档
+    - https://www.w3.org/
+    - https://whatwg.org/
+    - https://developer.mozilla.org/
+    - https://developer.apple.com/
+    - https://docs.microsoft.com/
+    - http://www.ecma-international.org/publications/standards/Ecma-262.htm
+  - 大师
+
+#### 面试
+- 面试题
+  - 广度
+  - 深度
+  - 区分度
+- 面试过程
+  - 打断，打断是一种提示
+  - 争论，争论的技巧/也可能是压力面试
+  - 难题，缩小规模/展现分析过程
+- 题目类型
+  - 项目性
+  - 知识性
+  - 开放性
+  - 案例性
+  - 有趣的
+- 知识体系比知识点更重要
+
+### 构建知识体系(前端技术)
+#### HTML
+- HTML as 通用的计算机编程语言
+  - 词法
+  - 语法
+- HTML as SGML(Standard Generalized Markup Language 标准通用标记语言)
+  - DTD 
+    - Document Type Definition 文档类型定义 
+    - https://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd
+  - ENTITY 
+    - 实体(html下就是&符号后面的字符)
+    - Character mnemonic entities
+      - HTMLlat1.ent(https://www.w3.org/TR/html4/HTMLlat1.ent)
+      - HTMLsymbol.ent(https://www.w3.org/TR/html4/HTMLsymbol.ent)
+      - HTMLspecial.ent(https://www.w3.org/TR/html4/HTMLspecial.ent)
+- HTML as XML
+  - namespace
+    - svg
+    - mathml
+    - aria (Accessible Rich Internet Application) 通过role属性实现
+  - tag
+    - a
+    - abbr
+    - address
+    - area
+    - article
+    - aside
+    - audio
+    - b
+    - base
+    - bdi
+    - bdo
+    - blockquote
+    - body
+    - br
+    - button
+    - canvas
+    - caption
+    - cite
+    - code
+    - col
+    - colgroup
+    - data
+    - datalist
+    - dd
+    - del
+    - details
+    - dfn
+    - dialog
+    - div
+    - dl
+    - dt
+    - em
+    - embed
+    - fieldset
+    - figcaption
+    - figure
+    - footer
+    - form
+    - h1
+    - h2
+    - h3
+    - h4
+    - h5
+    - h6
+    - head
+    - header
+    - hgroup
+    - hr
+    - html
+    - i
+    - iframe
+    - img
+    - input
+    - ins
+    - kbd
+    - label
+    - legend
+    - li
+    - link
+    - main
+    - map
+    - mark
+    - menu
+    - meta
+    - meter
+    - nav
+    - noscript
+    - object
+    - ol
+    - optgroup
+    - option
+    - output
+    - p
+    - param
+    - picture
+    - pre
+    - progress
+    - q
+    - rp
+    - rt
+    - ruby
+    - s
+    - samp
+    - script
+    - section
+    - select
+    - slot
+    - small
+    - source
+    - span
+    - strong
+    - style
+    - sub
+    - summary
+    - sup
+    - table
+    - tbody
+    - td
+    - template
+    - textarea
+    - tfoot
+    - th
+    - thead
+    - time
+    - title
+    - tr
+    - track
+    - u
+    - ul
+    - var
+    - video
+    - wbr
+
+#### JS
+- Grammar 语法
+  - Lex 
+    - WhiteSpace
+      - 空格
+      - 零宽空格\uFEFF 'var\uFEFFa=1'
+    - LineTerminator
+    - Comment
+    - Token
+      - Identifier
+      - Keywords
+      - Punctuator 标点符号
+      - NumericLiteral 
+      - StringLiteral
+      - RegularExpressionLiteral
+      - Template
+  - Syntax
+    - Atom
+    - Expressions
+    - Structure
+    - Scripte&Module
+- Semantics 语义
+- Runtime 运行时
+  - Type
+    - Null
+    - Undefined
+    - String
+    - Number
+    - Boolean
+    - Object
+    - Symbol
+    - 内部类型
+      - Reference
+      - CompletionRecord
+  - 执行过程
+    - Job
+    - Script/Module
+    - Promise
+    - Function
+    - Statement
+    - Expression
+    - Literal
+    - Identifier
+
+#### CSS
+- 语法/词法
+- @规则
+- 普通规则
+  - 选择器
+    - 简单选择器
+      - *
+      - tagname
+      - #id
+      - .cls
+      - [attr]
+    - 复合选择器
+      - 简单选择器的组合
+    - 复杂选择器
+      - 空格
+      - >
+      - +
+      - ~
+    - 选择器列表
+      - , 
+  - Property
+  - Value
+- 机制
+  - 排版
+  - 伪元素
+  - 动画
+  - 优先级
+
+#### API
+- browser
+  - BOM（进化为WebPlatformAPI）
+  - DOM
+    - Nodes
+      - Document
+      - DocumentType
+      - DocumentFragment
+      - Element
+      - Text
+      - Comment
+      - ProcessingInstruction <?
+    - Ranges
+    - Events
+- node
+- 小程序
+
+#### 其他
+- 参考链接
+  - https://www.ecma-international.org/
+  - https://www.ecma-international.org/publications/files/ECMA-ST/ECMA-262.pdf
+  - https://www.caniuse.com/
+- 规范制定过程
+  - WD WorkingDraft工作草案
+  - CR CandidateRecommendation候选推荐标准
+  - PR ProposedRecommendation建议推荐标准
+  - REC Recommendation推荐标准
+  - Retire 退休
+- 前端兼容性
+  - 主要是测试
+  - 实践中测试TOP30
