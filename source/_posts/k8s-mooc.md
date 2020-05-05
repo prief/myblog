@@ -90,14 +90,14 @@ tags:
   - vi /etc/hosts
 - 安装依赖包
   - wget -O /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo/Centos-7.repo
-  - yum install -y epel-release && yum clean all && yum makecache
-  - yum update -y
+  - rhel更换免费的yum源 
+  - yum install -y epel-release && yum clean all && yum makecache && yum update -y
   - yum install -y conntrack ipvsadm ipset jq sysstat curl iptables libseccomp ntpdate
   - ntpdate ip
 - 主机配置
   - 关闭防火墙 systemctl stop firewalld && systemctl disable firewalld
   - 关闭swap  swapoff -a && sed -i '/swap/s/^\(.*\)$/# \1/g' /etc/fstab
-  - 重置iptables iptables -F && iptables -X && iptables -F -t nat && iptables -X -t nat && iptables -P FORWARD ACCEPT
+  - 重置iptables iptables -F && iptables -X && iptables -F -t nat && iptables -X -t nat && iptables -P FORWARD ACCEPT && service iptables save
   - 关闭selinux setenforce 0 && sed -i 's/^SELINUX=.*$/SELINUX=disabled/' /etc/selinux/config
   - 关闭dnsmasq systemctl stop dnsmasq && systemctl disable dnsmasq
   - 配置k8s系统文件 vim /etc/sysctl.d/kubernetes.conf && sysctl -p /etc/sysctl.d/kubernetes.conf
