@@ -946,11 +946,16 @@ convertNumberToString(100,10)
     - while(){}
     - do{}while()
     - for(;;){}
+      - let/const声明过后的变量不能再被声明
+      - let i = 0;for(let i=5;i<10;i++){let i=0;console.log(i)}; 
+      - 上面的i会产生3层作用域,for语句中的()里的声明部分会对let/const产生一层作用域
     - for(in){}
     - for(of){}
+      - 遍历 iterator 的每个值
   - WithStatement
   - LabelledStatement
   - TryStatement
+    - try{}catch(){}finally{}
 - 声明
 
 #### runtime
