@@ -927,7 +927,8 @@ convertNumberToString(100,10)
   - 按照ECMAScript标准，特定语句必须以分号结尾
   - 有时候书写方便可以省略分号
   - 解释器会自己判断语句该在哪里终止，实际上并没有真正的插入分号，只是个形象的说法
-- var最好写在函数内最前面或第一次出现的地方来作为最佳实践
+- var最好写在函数内最前面或第一次出现的地方来作为最佳实践或放弃var
+- void function(){}(); void来表达IIFE成为最佳实践
 
 #### 语句
 - 简单语句
@@ -950,13 +951,27 @@ convertNumberToString(100,10)
       - let i = 0;for(let i=5;i<10;i++){let i=0;console.log(i)}; 
       - 上面的i会产生3层作用域,for语句中的()里的声明部分会对let/const产生一层作用域
     - for(in){}
-    - for(of){}
-      - 遍历 iterator 的每个值
+    - for(of){} 遍历iterator的每个值
+    - for await(of){} 遍历异步iterator的每个值
   - WithStatement
   - LabelledStatement
   - TryStatement
     - try{}catch(){}finally{}
+    - catch(e){}语句块也会对e生成和后面的{}一起的独立的作用域
 - 声明
+  - FunctionDeclaration
+  - GeneratorDeclaration
+  - AsyncFunctionDeclaration
+  - AsyncGeneratorDeclaration
+  - VariableStatement
+    - 主要是变量声明语句的hoist
+    - 只提升声明的部分，初始化赋值的部分不提升
+    - 执行过程中的hoist称为BoundNames，会被预处理
+  - ClassDeclaration
+  - LexicalDeclaration
+    - const/let
+    - 声明过后不允许重复声明
+    - 产生块级作用域
 
 #### runtime
 - CompletionRecord 语句执行完成后的记录，有三个属性
@@ -964,5 +979,42 @@ convertNumberToString(100,10)
   - [[value]]: Types ｜ empty
   - [[target]]: label
 - LexicalEnvironment
+  - 作用域一般指静态代码中的区域
+  - 上下文一般指运行时内存中的对象
+
+#### 对象
+- 三要素
+  - 唯一性，每个对象都是唯一的
+  - 状态，用属性描述对象
+  - 行为，用方法改变对象的状态
+- 面向对象
+  - 三特性
+    - 封装/复用/解耦/内聚
+    - 继承
+    - 多态
+  - 基于类的面向对象
+    - 归类派，多重继承是其特性，如c++
+    - 分类派，单继承结构，会有一个基类Object，但向上归类时就会产生Interface和Mixin
+  - 基于原型对象的面向对象
+    - 采用相似的方式去描述对象，不做严谨的分类
+    - 任何对象只需要描述自己与原型对象的区别即可
+- js对象
+  - 对象的描述方式非常简单，只需要关注原型和属性即可(原型不是属性，js方法也属于属性)
+  - 属性kv对
+    - key
+      - String
+      - Symbol
+    - value
+      - DataProperty
+        - [[value]]
+        - writable
+        - enumerable
+        - configurable
+      - AccessorProperty
+        - get
+        - set
+        - enumerable
+        - configurable
+
 
 ### js结构化
