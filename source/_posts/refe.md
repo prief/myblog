@@ -679,6 +679,17 @@ tags:
       - UTF-8 字符用1-4个字节表示
       - UTF-16 字符用2个字节或4个字节表示
       - UTF-32 字符用4个字节表示
+      - {% asset_img utf8.png utf8转换 %}
+      
+      ```
+      var bits = '美'.codePointAt().toString(2); // "111111110001110"
+      
+      bits.padding(); // "0111111110001110"
+
+      utf8 = [0b11100111,0b10111110,0b10001110].map(e=>e.toString(16)) // ["e7", "be", "8e"]
+
+      ```
+
     - UCS 
       - Unicode Character Set
       - UCS-2 2个字节进行编码
@@ -999,7 +1010,10 @@ convertNumberToString(100,10)
     - 采用相似的方式去描述对象，不做严谨的分类
     - 任何对象只需要描述自己与原型对象的区别即可
 - js对象
-  - 对象的描述方式非常简单，只需要关注原型和属性即可(原型不是属性，js方法也属于属性)
+  - 一般对象的描述方式非常简单，只需要关注属性和原型即可(原型不是属性，js方法也属于属性)
+    - 访问属性时如果当前对象没有，则会访问原型对象上的同名属性，直到null，形成原型链
+    - 增加属性时则是增加到自身的属性上，不会影响原型链的上层
+    - 属性机制保证了对象只需要描述自己与原型对象的区别即可
   - 属性kv对
     - key
       - String
@@ -1015,6 +1029,30 @@ convertNumberToString(100,10)
         - set
         - enumerable
         - configurable
-
+  - ObjectApi
+    - 基本对象能力api
+      - {}
+      - .
+      - []
+      - Object.defineProperty
+    - 原型api（加上基本对象能力api就是基于原型的OOP）
+      - Object.create
+      - Object.setPrototypeOf
+      - Object.getPrototypeOf
+    - 类api（加上基本对象能力api就是基于类的OOP）
+      - new 
+      - class
+      - extends
+    - 原型模拟类的api（在未实现class前的模式，现在应该被废弃）
+      - new
+      - function
+      - prototype
+  - Function Object
+    - 函数对象是一种特殊的对象
+    - 除了一般对象的属性和原型外，函数对象还有一个行为[[call]]
+    - function关键字/箭头函数/Function构造器创建的对象都有[[call]]行为
+    - 用f()这样的语法把对象当作函数使用时就会访问[[call]]行为
+    - 如果对象上没有[[call]]行为，使用()调用时就会报错
+ 
 
 ### js结构化
