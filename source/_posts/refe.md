@@ -124,10 +124,12 @@ tags:
     - https://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd
   - ENTITY 
     - 实体(html下就是&符号后面的字符)
-    - Character mnemonic entities
-      - HTMLlat1.ent(https://www.w3.org/TR/html4/HTMLlat1.ent)
-      - HTMLsymbol.ent(https://www.w3.org/TR/html4/HTMLsymbol.ent)
-      - HTMLspecial.ent(https://www.w3.org/TR/html4/HTMLspecial.ent)
+    - 两种形式
+      - &entity_name;  // Character mnemonic entities
+        - HTMLlat1.ent(https://www.w3.org/TR/html4/HTMLlat1.ent)
+        - HTMLsymbol.ent(https://www.w3.org/TR/html4/HTMLsymbol.ent)
+        - HTMLspecial.ent(https://www.w3.org/TR/html4/HTMLspecial.ent)
+      - &#entity_number; 
 - HTML as XML
   - namespace
     - svg
@@ -595,6 +597,7 @@ tags:
   - (?<=y)x 后行断言，即x前面有y才匹配x
   - x(?!y) 正向否定查找，即x后面不是y才匹配x
   - (?<!y)x 反向否定查找，即x前面不是y才匹配x
+  - 正则中的\1反向引用产生回溯，会造成原本是m+n的时间复杂度变更很高的复杂度
 - 字符编码
   - 字符集把字符编码指定为集合中的某个对象以便存储和网络传输
   - unicode
@@ -687,6 +690,47 @@ tags:
       bits.padding(); // "0111111110001110"
 
       utf8 = [0b11100111,0b10111110,0b10001110].map(e=>e.toString(16)) // ["e7", "be", "8e"]
+
+      // 字符串转成blob
+      const json = { hello: "world" };
+      const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' }); 
+
+      // base64编码转成blob
+      const base64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21bKAAAABlBMVEUAAP+AgIBMbL/VAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNgAAAAAgAB9HFkpgAAAABJRU5ErkJggg==';
+      const byteCharacters = atob(base64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const array = Uint8Array.from(byteNumbers);
+      const blob = new Blob([array], {type: 'image/png'});  
+
+
+      // ArrayBuffer转成文件上传
+      // 在浏览器中，每个字节以十进制的方式存在
+      const bufferArrary = [137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,1,0,0,0,1,1,3,0,0,0,37,219,86,202,0,0,0,6,80,76,84,69,0,0,255,128,128,128,76,108,191,213,0,0,0,9,112,72,89,115,0,0,14,196,0,0,14,196,1,149,43,14,27,0,0,0,10,73,68,65,84,8,153,99,96,0,0,0,2,0,1,244,113,100,166,0,0,0,0,73,69,78,68,174,66,96,130];
+      const array = Uint8Array.from(bufferArrary);
+      const blob = new Blob([array], {type: 'image/png'});
+
+      // 服务端node
+
+      var b = 'e7 be 8e'; // buffer字符串
+      Buffer.from(b.split(' ').map(x=>'0x'+x)).toString() // 美
+
+      // base64 to buffer
+      const b64string = /* whatever */;
+      const buf = Buffer.from(b64string, 'base64');
+
+      // stream to buffer
+      function streamToBuffer(stream) {  
+        return new Promise((resolve, reject) => {
+          const buffers = [];
+          stream.on('error', reject);
+          stream.on('data', (data) => buffers.push(data))
+          stream.on('end', () => resolve(Buffer.concat(buffers))
+        });
+      }
+                        
 
       ```
 
@@ -871,6 +915,8 @@ input {
     - ||
   - Conditional
     - ? : 
+  - Comma 返回最后一个表达式的值
+    - , 
 - Runtime
   - Type Convertion
     - Boxing & Unboxing
@@ -1053,6 +1099,378 @@ convertNumberToString(100,10)
     - function关键字/箭头函数/Function构造器创建的对象都有[[call]]行为
     - 用f()这样的语法把对象当作函数使用时就会访问[[call]]行为
     - 如果对象上没有[[call]]行为，使用()调用时就会报错
- 
 
-### js结构化
+### js结构化程序设计
+#### js引擎
+- js引擎接收js代码的三种方式
+  - 普通的script['src']或内联代码片段
+  - script[type='module']
+  - setTimeout/setInterval
+- 宏任务
+  - script
+  - UI交互
+  - setTimeout/setInterval
+- promise微任务执行顺序
+  - 一个宏任务中只有一个微任务队列，可以有多个微任务，所有微任务执行完毕后此宏任务才执行完毕
+  - promise.resolve和promise.reject都会产生微任务，插入当前task的宏任务后面继续执行
+  - promise.resolve.then的回调函数里尽量不要再有Promise
+  - 如果嵌套里promise,里面promise.resolve.then()执行后外面后续的then也会被触发
+  - 所以可能后面的then执行后又返回里面promise.resolve.then().then()执行
+  - promise.then的参数如果不是对应resolve/reject的函数,其他语句会同步执行，并且执行中间产生的错误不会立即中断执行，而是等同步任务执行完后回调给promise.catch或报错，所以需要注意then()里的参数是否是函数来决定是否会产生微任务
+  - await 语句也会产生微任务，和promise一起执行微任务入队操作
+  - throw new Error()或运行时产生的报错只会影响当前宏任务，不影响已入队的微任务，更不影响异步的宏任务
+  - promise微任务执行顺序和实现有关，safari和chrome可能不一致
+  - 浏览器中只有promise和MutationObserver会产生微任务
+
+#### 结构化程序设计
+- js执行粒度
+  - JSContext => Realm
+  - 宏任务
+  - 微任务 Promise
+  - 函数调用 ExecutionContext
+  - 语句/声明
+  - 表达式
+  - 变量/直接量/this
+
+- 函数调用
+  - 调用过程产生调用栈ExecutionContextStack
+  - 栈顶的上下文称为RunningExecutionContext
+  - ExecutionContext
+    - Generator
+      - 有Generator的就是GeneratorExecutionContext
+      - 没有Generator就是普通的ECMAExecutionContext,包括下面6种
+    - Realm
+      - js中函数表达式和对象直接量都会创建在Realm中
+      - 使用.做隐式转换时也会创建在Realm中
+      - 这些对象也有原型，如果没有Realm，就不知道他们的原型是什么
+      - 前端产生不同的Realm一般只有在不同的iframe中
+    - Script or Module
+    - CodeEvaluationState (generator函数记录执行到哪一步)
+    - Function
+    - LexicalEnvironment
+      - this
+        - 箭头函数的this是和变量一起进入环境
+        - 普通函数是是调用时进入环境
+      - new.target
+      - super
+      - 变量
+    - VariableEnvironment
+      - 是个历史包袱
+      - 主要是处理eval/with语句里的var声明的问题
+
+```
+// Realm里的全局对象
+var globalObjectArray = [
+    // Infinity,
+    // NaN,
+    // undefined,
+    "eval",
+    "isFinite",
+    "isNaN",
+    "parseFloat",
+    "parseInt",
+    "decodeURI",
+    "encodeURI",
+    "decodeURIComponent",
+    "encodeURIComponent",
+    "Array",
+    "ArrayBuffer",
+    "Boolean",
+    "DataView",
+    "Date",
+    "Error",
+    "EvalError",
+    "Float32Array",
+    "Float64Array",
+    "Function",
+    "Int8Array",
+    "Int16Array",
+    "Int32Array",
+    "Map",
+    "Number",
+    "Object",
+    "Promise",
+    "Proxy",
+    "RangeError",
+    "ReferenceError",
+    "RegExp",
+    "Set",
+    "SharedArrayBuffer",
+    "String",
+    "Symbol",
+    "SyntaxError",
+    "TypeError",
+    "Uint8Array",
+    "Uint8ClampedArray",
+    "Uint16Array",
+    "Uint32Array",
+    "URIError",
+    "WeakMap",
+    "WeakSet",
+    "Atomics",
+    "JSON",
+    "Math",
+    "Reflect"
+];
+
+var queue = [];
+for(let p of globalObjectArray){
+    queue.push({
+        path:[p],
+        object:this[p]
+    })
+}
+
+var set = new Set();
+var current;
+
+while(queue.length){
+    current = queue.shift();
+
+    console.log(current.path.join('.'))
+    if(set.has(current.object)){
+        continue;
+    }
+    set.add(current.object);
+    
+    let proto = Object.getPrototypeOf(current.object);
+    if(proto){
+        queue.push({
+            path:current.path.concat(["__proto__"]),
+            object:proto
+        })
+    }
+
+    for(let p of Object.getOwnPropertyNames(current.object)){
+
+        var property = Object.getOwnPropertyDescriptor(current.object,p);
+        if(property.hasOwnProperty("value") && 
+            ((property.value != null) && (typeof property.value == "object") || (typeof property.value =="function")) && 
+            property.value instanceof Object){
+            queue.push({
+                path:current.path.concat([p]),
+                object:property.value
+            })
+        }
+
+        if(property.hasOwnProperty("get") && ( typeof property.get =="function")){
+            queue.push({
+                path:current.path.concat([p]),
+                object:property.get
+            })
+        }
+
+        if(property.hasOwnProperty("set") && ( typeof property.set =="function")){
+            queue.push({
+                path:current.path.concat([p]),
+                object:property.set
+            })
+        }
+    }
+}
+
+
+
+```
+
+### 浏览器工作原理
+#### 总论
+- 工作过程
+  - url->http
+  - html->parse
+  - DOM->css computing
+  - DOM with CSS->layout
+  - DOM with position->render
+  - Bitmap
+- 网络模型
+  - OSI七层网络模型
+    - 应用
+    - 表示
+    - 会话
+    - 传输
+    - 网络
+    - 数据链路
+    - 物理
+  - 四层网络模型
+    - 应用层
+    - 传输层
+    - 网络层
+    - 物理层
+- tcp/ip
+  - tcp
+    - 流
+    - 端口
+    - require('net')
+  - ip
+    - 包
+    - IP地址
+    - libnet/libpcap
+
+#### http
+- Request
+  - RequestLine
+  - Headers
+  - Body
+- Response
+  - StatusLine
+  - Headers
+  - Body
+
+```
+// client.js
+const net = require("net");
+
+class Request {
+    constructor(options){
+        this.method = options.method || "GET";
+        this.host = options.host || "localhost";
+        this.port = options.port || 8080;
+        this.path = options.path || "/";
+        this.headers = options.headers || {};
+        this.body = options.body || {};
+
+        if(!this.headers["Content-Type"]){
+            this.headers["Content-Type"] = "application/x-www-form-urlencoded"
+        }
+
+        if(this.headers["Content-Type"] == "application/json"){
+            this.bodyText = JSON.stringify(this.body)
+        }else if(this.headers["Content-Type"] =="application/x-www-form-urlencoded"){
+            this.bodyText = Object.keys(this.body).map(k=>encodeURIComponent(k) +"="+encodeURIComponent(this.body[k])).join("&")
+        }
+        this.headers["Content-Length"] = this.bodyText.length;
+
+    }
+
+    toString(){
+        return `${this.method} ${this.path} HTTP/1.1\r
+${Object.keys(this.headers).map(k=>`${k}: ${this.headers[k]}`).join("\r\n")}\r
+\r
+${this.bodyText}`
+    }
+
+    send(conn){
+        return new Promise((res,rej)=>{
+            if(conn){
+                conn.write(this.toString())
+            }else{
+                conn = net.createConnection({
+                    host:this.host,
+                    port:this.port
+                },()=>{
+                    conn.write(this.toString())
+                })
+            }
+
+            conn.on("data",(data)=>{
+                res(data.toString())
+                conn.end();
+            })
+            conn.on("end",()=>{
+                console.log("disconnected from server")
+            })
+            conn.on("error",(error)=>{
+                rej(error);
+                conn.end();
+            })
+        })
+        
+    }   
+}
+
+class ResponseParser {
+    constructor(){
+        this.WAITING_STATUS_LINE = 0;
+        this.WAITING_STATUS_LINE_END = 1;
+        this.WAITING_HEADER_NAME = 2;
+        this.WAITING_HEADER_VALUE = 3;
+        this.WAITING_HEADER_LINE_END = 4;
+        this.WAITING_HEADER_LINE_BLOCK_END = 5;
+
+        this.current = this.WAITING_STATUS_LINE;
+        this.statusLine = "";
+        this.headers = {};
+        this.headerName = "";
+        this.headerValue = "";
+    }
+
+    receive(string){
+
+    }
+
+    receiveChar(char){
+        
+    }
+}
+
+
+void async function(){
+    let request = new Request({
+        method:"GET",
+        host:"localhost",
+        port:8080,
+        path:"/",
+        headers:{
+            "geek":"time"
+        },
+        body:{
+            name:"GeekTime"
+        }
+    })
+    let res = await request.send();
+    console.log(res);
+}();
+
+// const client = net.createConnection({
+//     host:"localhost",
+//     port:8080
+// },()=>{
+//     console.log("connected to server");
+//     // client.write("GET / HTTP/1.1\r\n");
+//     // client.write("\r\n")
+
+//     let request = new Request({
+//         method:"GET",
+//         host:"localhost",
+//         port:8080,
+//         path:"/",
+//         headers:{
+//             "geek":"time"
+//         },
+//         body:{
+//             name:"GeekTime"
+//         },
+
+//     })
+
+//     console.log(request.toString())
+//     client.write(request.toString())
+// })
+
+// client.on("data",(data)=>{
+//     console.log("on data \r\n",data.toString())
+//     client.end();
+// })
+// client.on("end",()=>{
+//     console.log("disconnected from server")
+// })
+
+
+// server.js
+const http = require("http");
+
+const server = http.createServer((req,res)=>{
+    console.log("server received a request");
+    console.log(req.headers);
+    
+    res.setHeader("Content-Type","text/html");
+    res.setHeader("X-Foo","bar");
+    res.writeHead(200,{"Content-Type":"text/plain"});
+    res.end("GeekTime");
+})
+
+server.listen(8080,()=>{
+    console.log("server is running...")
+})
+
+```
