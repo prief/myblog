@@ -876,7 +876,7 @@ input {
     - ++a
   - Unary
     - delete a.b
-    - void foo(); 推荐在IIFE中使用void，避免IIFE前后没有插入分号导致多个文件合并时产生的()()()的bug
+    - void foo(); 
     - typeof a; null/function
     - await a
     - +a
@@ -985,7 +985,9 @@ convertNumberToString(100,10)
   - 有时候书写方便可以省略分号
   - 解释器会自己判断语句该在哪里终止，实际上并没有真正的插入分号，只是个形象的说法
 - var最好写在函数内最前面或第一次出现的地方来作为最佳实践或放弃var
-- void function(){}(); void来表达IIFE成为最佳实践
+- IIFE
+  - void function(){}(); void来表达IIFE成为最佳实践
+  - 推荐在IIFE中使用void，避免IIFE前后没有插入分号导致多个文件合并时产生的()()()的bug
 
 #### 语句
 - 简单语句
@@ -1013,8 +1015,9 @@ convertNumberToString(100,10)
   - WithStatement
   - LabelledStatement
   - TryStatement
-    - try{}catch(){}finally{}
+    - try{}catch(){}finally{} try/catch语句即使得到的结果非normal型的完成记录，也要执行finally
     - catch(e){}语句块也会对e生成和后面的{}一起的独立的作用域
+    - try里有return也会执行finally里的语句，并且如果finally也有return，则返回finally里的return
 - 声明
   - FunctionDeclaration
   - GeneratorDeclaration
@@ -1107,10 +1110,14 @@ convertNumberToString(100,10)
   - script[type='module']
   - setTimeout/setInterval
 - 宏任务
-  - script
-  - UI交互
-  - setTimeout/setInterval
-- promise微任务执行顺序
+  - 宿主发起的任务称为宏任务
+  - 宏任务的队列相当于是事件循环
+  - 方式
+    - script
+    - UI交互
+    - setTimeout/setInterval
+- 微任务
+  - js引擎发起的任务称为微任务，浏览器中只有promise和MutationObserver会产生微任务
   - 一个宏任务中只有一个微任务队列，可以有多个微任务，所有微任务执行完毕后此宏任务才执行完毕
   - promise.resolve和promise.reject都会产生微任务，插入当前task的宏任务后面继续执行
   - promise.resolve.then的回调函数里尽量不要再有Promise
@@ -1120,7 +1127,10 @@ convertNumberToString(100,10)
   - await 语句也会产生微任务，和promise一起执行微任务入队操作
   - throw new Error()或运行时产生的报错只会影响当前宏任务，不影响已入队的微任务，更不影响异步的宏任务
   - promise微任务执行顺序和实现有关，safari和chrome可能不一致
-  - 浏览器中只有promise和MutationObserver会产生微任务
+- async/await
+  - async函数必定返回promise，可以把返回promise的函数都称为异步函数
+  - await等待一个异步的promise
+
 
 #### 结构化程序设计
 - js执行粒度
@@ -1133,32 +1143,82 @@ convertNumberToString(100,10)
   - 变量/直接量/this
 
 - 函数调用
-  - 调用过程产生调用栈ExecutionContextStack
-  - 栈顶的上下文称为RunningExecutionContext
   - ExecutionContext
-    - Generator
-      - 有Generator的就是GeneratorExecutionContext
-      - 没有Generator就是普通的ECMAExecutionContext,包括下面6种
-    - Realm
-      - js中函数表达式和对象直接量都会创建在Realm中
-      - 使用.做隐式转换时也会创建在Realm中
-      - 这些对象也有原型，如果没有Realm，就不知道他们的原型是什么
-      - 前端产生不同的Realm一般只有在不同的iframe中
-    - Script or Module
-    - CodeEvaluationState (generator函数记录执行到哪一步)
-    - Function
-    - LexicalEnvironment
+    - 代码执行所需要的的所有信息称为执行上下文
+    - ES3
+      - scope
+      - variableObject 用于存储变量的对象
       - this
-        - 箭头函数的this是和变量一起进入环境
-        - 普通函数是是调用时进入环境
-      - new.target
-      - super
-      - 变量
-    - VariableEnvironment
-      - 是个历史包袱
-      - 主要是处理eval/with语句里的var声明的问题
+    - ES5
+      - LexicalEnvironment 词法环境，获取变量时使用
+      - VariableEnvironment 变量环境，声明变量时使用
+      - this
+    - ES2018
+      - Generator
+        - 有Generator的就是GeneratorExecutionContext
+        - 没有Generator就是普通的ECMAExecutionContext,包括下面6种
+      - Realm
+        - 全局基础库和内置对象的实例
+        - js中函数表达式和对象直接量都会创建在Realm中
+        - 使用.做隐式转换时也会创建在Realm中
+        - 这些对象也有原型，如果没有Realm，就不知道他们的原型是什么
+        - 前端产生不同的Realm一般只有在不同的iframe中
+      - Script or Module
+      - CodeEvaluationState 用户恢复代码执行位置
+      - Function
+      - LexicalEnvironment
+        - this
+          - 箭头函数的this是和变量一起进入环境
+          - 普通函数是是调用时进入环境
+        - new.target
+        - super
+        - 变量
+      - VariableEnvironment
+        - 是个历史包袱
+        - 主要是处理eval/with语句里的var声明的问题
+        - 变量环境，声明变量时使用
+    - 上下文切换
+      - 函数体内可以访问定义时词法环境，不能访问运行时另一个模块的词法环境，就是运行时产生了上下文切换
+      - js用栈管理上下文切换，栈中的每一项包含一个链表
+      - 调用过程产生调用栈ExecutionContextStack
+      - 栈顶的上下文称为RunningExecutionContext
+  - 闭包
+    - 绑定了执行环境的函数
+    - 古典闭包定义
+      - 环境部分
+        - 环境：函数的词法环境，执行上下文的一部分
+        - 标识符列表：函数中用到的未声明的变量
+      - 表达式部分
+        - 函数体
+  - this
+    - [[thisMode]]私有属性的三个取值
+      - lexical 表示从词法环境上下文中找this，对应了箭头函数
+      - global 表示当this为undefined时取全局对象，对应了普通的函数
+      - strict 严格模式时this严格按照调用时传入的值，可能为null或undefined，class里的设计就是严格模式
+    - 操作this
+      - Function.prototype.call(o,args...)
+      - Function.prototype.apply(o,[args...])
+      - Function.prototype.bind(o,args...)返回一个绑定了this和参数的函数，后续调用
+  - new执行过程
+    - 以构造器的prototype对象为原型创建一个新对象
+    - 将this和调用参数传入并执行
+    - 如果构造器返回函数则直接返回，否则返回第一步创建的对象
 
 ```
+
+// 不同Realm里对象的不同行为 instanceof 失效
+var iframe = document.createElement('iframe')
+document.documentElement.appendChild(iframe)
+iframe.src="javascript:var b = {};"
+
+var b1 = iframe.contentWindow.b;
+var b2 = {};
+
+console.log(typeof b1, typeof b2); //object object
+
+console.log(b1 instanceof Object, b2 instanceof Object); //false true
+
+
 // Realm里的全局对象
 var globalObjectArray = [
     // Infinity,
