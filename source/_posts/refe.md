@@ -308,7 +308,7 @@ tags:
       - 简单选择器的各种组合
     - 复杂选择器
       - 空格
-      - >
+      - \>
       - +
       - ~
     - 选择器列表
@@ -388,7 +388,7 @@ tags:
   - 分析业务目标
   - 制定数据指标
 - 现状
-  - 采集数据(performance/window.onerror)
+  - 采集数据(performance/window.onerror(scr过来的script需要加\[crossorigin=\'anonymouse\'\]))
   - 建立数据展示系统(echart/antV)
 - 方案
   - 设计技术方案
@@ -478,15 +478,15 @@ tags:
     - 基础结构（也称终结符，引号和中间的字符）
     - 复合结构（也称非终结符）
   - 可以有括号
-  - * 表示重复多次
+  - \* 表示重复多次
   - | 表示或
-  - + 表示至少一次
+  - \+ 表示至少一次
   - 运算优先级高的先定义，先定义的也可以引用后续定义的语法结构
 - 产生式理解乔姆斯基谱系（?表示任意）
   - 0-型文法：无限制文法或短语结构文法 ?::=?
-  - 1-型文法：上下文相关文法 ?<A>?::=?<B>?
-  - 2-型文法：上下文无关文法 <A>::=?
-  - 3-型文法：正则文法 <A>::=<A>? (左结合,js中**为右结合即从右到左算)
+  - 1-型文法：上下文相关文法 ?\<A\>?::=?\<B\>?
+  - 2-型文法：上下文无关文法 \<A\>::=?
+  - 3-型文法：正则文法 \<A\>::=\<A\>? (左结合,js中**为右结合即从右到左算)
 - 图灵完备性（世界上一切不都可被计算）
   - 命令式-图灵机
     - goto
@@ -598,24 +598,6 @@ tags:
   - x(?!y) 正向否定查找，即x后面不是y才匹配x
   - (?<!y)x 反向否定查找，即x前面不是y才匹配x
   - 正则中的\1反向引用产生回溯，会造成原本是m+n的时间复杂度变更很高的复杂度
-- 字符编码
-  - 字符集把字符编码指定为集合中的某个对象以便存储和网络传输
-  - unicode
-    - 万国码，对世界上大部分文字系统做了编码，可容纳100多万个符号
-    - 只是一个符号集，规定了符号的二进制代码即码点code point（正整数），却没有规定二进制代码如何存储
-    - unicode规范定义每一个文件的最前面分别加入一个表示编码顺序的字符(FEFF|FFFE)来作为BOM(Byte Order Mark)从而区分字节序
-      - 头两个字节是FEFF就表示采用大头方式 big endian(BE)
-      - 头两个字节是FFFE就表示采用小头方式 little endian(LE)
-      - 前面3个字节是EF BB BF表示采用UTF-8 with BOM 编码
-  - ASCII American Standard Code for Information Interchange美国信息交换标准代码，基于拉丁字母
-  - 空格
-    - NBSP no-break space禁止html中两个字之间的断行,unicode为U+00A0
-    - ZWSP zero width no-break space不可打印的字符,unicode为U+FEFF，主要用作上面的BOM
-  - notepad.exe编码方式
-    - ANSI是windows默认的编码方式，针对英文用ASCII，简体中文用GB2312，繁体中文用BIG5
-    - Unicode是使用UCS-2(Universal Character Set-2即用2个字节编码)编码，即直接用两个字节存入字符的unicode码值，采用little endian
-    - Unicode big endian
-    - UTF-8(UCS Transformation Format-8即以8位为单元对UCS进行编码)
 
 #### 词法与类型
 - 词法
@@ -627,16 +609,16 @@ tags:
     - '字符'.codePointAt().toString(16)返回16进制数字，可用U+FFFF或\uFFFF表示
 - InputElement
   - WhiteSpace
-    - <TAB> tabulation
-    - <VT> virtical tabulation
-    - <FF> form feed
-    - <SP> space
-    - <NBSP> no break space
-    - <ZWNBSP> zero width no break space
-    - <USP> unicode space
+    - \<TAB\> tabulation
+    - \<VT\> virtical tabulation
+    - \<FF\> form feed
+    - \<SP\> space
+    - \<NBSP\> no break space
+    - \<ZWNBSP\> zero width no break space
+    - \<USP\> unicode space
   - LineTerminator
-    - <LF> line feed U+000A
-    - <CR> carriage return U+000D
+    - \<LF\> line feed U+000A
+    - \<CR\> carriage return U+000D
   - Comment
     - //
     - /**/
@@ -676,63 +658,67 @@ tags:
     - 0x10
 - String
   - encoding
-    - ASCII
+    - ASCII American Standard Code for Information Interchange美国信息交换标准代码，基于拉丁字母
     - Unicode
       - UCS Transformation Format
-      - UTF-8 字符用1-4个字节表示
-      - UTF-16 字符用2个字节或4个字节表示
-      - UTF-32 字符用4个字节表示
-      - {% asset_img utf8.png utf8转换 %}
-      
-      ```
-      var bits = '美'.codePointAt().toString(2); // "111111110001110"
-      
-      bits.padding(); // "0111111110001110"
+      - 字符集把字符编码指定为集合中的某个对象以便存储和网络传输
+      - 万国码，对世界上大部分文字系统做了编码，可容纳100多万个符号
+      - 规范定义每一个文件的最前面分别加入一个表示编码顺序的字符(FEFF|FFFE)来作为BOM(Byte Order Mark)从而区分字节序
+        - 头两个字节是FEFF就表示采用大头方式 big endian(BE)
+        - 头两个字节是FFFE就表示采用小头方式 little endian(LE)
+        - 前面3个字节是EF BB BF表示采用UTF-8 with BOM 编码
+      - 只是一个符号集，规定了符号的二进制代码即码点code point（正整数），却没有规定二进制代码如何存储
+        - UTF-8 字符用1-4个字节表示
+        {% asset_img utf8.png utf8转换 %}
+        - UTF-16 字符用2个字节或4个字节表示
+        - UTF-32 字符用4个字节表示
+```
+var bits = '美'.codePointAt().toString(2); // "111111110001110"
 
-      utf8 = [0b11100111,0b10111110,0b10001110].map(e=>e.toString(16)) // ["e7", "be", "8e"]
+bits.padding(); // "0111111110001110"
 
-      // 字符串转成blob
-      const json = { hello: "world" };
-      const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' }); 
+utf8 = [0b11100111,0b10111110,0b10001110].map(e=>e.toString(16)) // ["e7", "be", "8e"]
 
-      // base64编码转成blob
-      const base64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21bKAAAABlBMVEUAAP+AgIBMbL/VAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNgAAAAAgAB9HFkpgAAAABJRU5ErkJggg==';
-      const byteCharacters = atob(base64);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const array = Uint8Array.from(byteNumbers);
-      const blob = new Blob([array], {type: 'image/png'});  
+// 字符串转成blob
+const json = { hello: "world" };
+const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' }); 
+
+// base64编码转成blob
+const base64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21bKAAAABlBMVEUAAP+AgIBMbL/VAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAACklEQVQImWNgAAAAAgAB9HFkpgAAAABJRU5ErkJggg==';
+const byteCharacters = atob(base64);
+const byteNumbers = new Array(byteCharacters.length);
+for (let i = 0; i < byteCharacters.length; i++) {
+  byteNumbers[i] = byteCharacters.charCodeAt(i);
+}
+const array = Uint8Array.from(byteNumbers);
+const blob = new Blob([array], {type: 'image/png'});  
 
 
-      // ArrayBuffer转成文件上传
-      // 在浏览器中，每个字节以十进制的方式存在
-      const bufferArrary = [137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,1,0,0,0,1,1,3,0,0,0,37,219,86,202,0,0,0,6,80,76,84,69,0,0,255,128,128,128,76,108,191,213,0,0,0,9,112,72,89,115,0,0,14,196,0,0,14,196,1,149,43,14,27,0,0,0,10,73,68,65,84,8,153,99,96,0,0,0,2,0,1,244,113,100,166,0,0,0,0,73,69,78,68,174,66,96,130];
-      const array = Uint8Array.from(bufferArrary);
-      const blob = new Blob([array], {type: 'image/png'});
+// ArrayBuffer转成文件上传
+// 在浏览器中，每个字节以十进制的方式存在
+const bufferArrary = [137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,1,0,0,0,1,1,3,0,0,0,37,219,86,202,0,0,0,6,80,76,84,69,0,0,255,128,128,128,76,108,191,213,0,0,0,9,112,72,89,115,0,0,14,196,0,0,14,196,1,149,43,14,27,0,0,0,10,73,68,65,84,8,153,99,96,0,0,0,2,0,1,244,113,100,166,0,0,0,0,73,69,78,68,174,66,96,130];
+const array = Uint8Array.from(bufferArrary);
+const blob = new Blob([array], {type: 'image/png'});
 
-      // 服务端node
+// 服务端node
+var b = 'e7 be 8e'; // buffer字符串
+Buffer.from(b.split(' ').map(x=>'0x'+x)).toString() // 美
 
-      var b = 'e7 be 8e'; // buffer字符串
-      Buffer.from(b.split(' ').map(x=>'0x'+x)).toString() // 美
+// base64 to buffer
+const b64string = /* whatever */;
+const buf = Buffer.from(b64string, 'base64');
 
-      // base64 to buffer
-      const b64string = /* whatever */;
-      const buf = Buffer.from(b64string, 'base64');
+// stream to buffer
+function streamToBuffer(stream) {  
+  return new Promise((resolve, reject) => {
+    const buffers = [];
+    stream.on('error', reject);
+    stream.on('data', (data) => buffers.push(data))
+    stream.on('end', () => resolve(Buffer.concat(buffers))
+  });
+}
 
-      // stream to buffer
-      function streamToBuffer(stream) {  
-        return new Promise((resolve, reject) => {
-          const buffers = [];
-          stream.on('error', reject);
-          stream.on('data', (data) => buffers.push(data))
-          stream.on('end', () => resolve(Buffer.concat(buffers))
-        });
-      }
-                        
-
-      ```
+```
 
     - UCS 
       - Unicode Character Set
@@ -756,12 +742,20 @@ tags:
       - \xFF 后面跟2个16进制数字表示一个字符
       - \uFFFF 后面跟4个16进制数字表示一个字符
     - 字符串模版
+    - 空格
+      - NBSP no-break space禁止html中两个字之间的断行,unicode为U+00A0
+      - ZWSP zero width no-break space不可打印的字符,unicode为U+FEFF，主要用作上面的BOM
+    - notepad.exe编码方式
+      - ANSI是windows默认的编码方式，针对英文用ASCII，简体中文用GB2312，繁体中文用BIG5
+      - Unicode是使用UCS-2(Universal Character Set-2即用2个字节编码)编码，即直接用两个字节存入字符的unicode码值，采用little endian，前两个字节为FFFE
+      - Unicode big endian，前两个字节为FEFF
+      - UTF-8(UCS Transformation Format-8即以8位为单元对UCS进行编码)，前三个字节为EFBBBF，表示UTF-8 with BOM
 - 正则表达式
   - 由于/也是除法的符号，所以/a/g正则字面量前面有标示符时可能会出错
   ```
   var a,g;
   a
-  /a/g
+  /a/g  // 可能解释为1/g
 
   ```
 
@@ -772,7 +766,6 @@ tags:
   - 下面的代码中把隐藏的1展示了出来方便理解
   - js中0和-0是相等的只是符号位不同，判断zero是正0还是-0可以用 1/zero，如果返回Infinity则是正0，返回-Infinity则是-0;
   - 由于精度问题，尽量减少对浮点数的运算，运算后要考虑浮点数本身和运算符号带来的精度丢失问题，如1.1+1.3-2.4的问题
-
 ```
 <template>
   <div id="app">
@@ -860,19 +853,19 @@ input {
     - a.b 属性访问
     - a[b] b可以是变量，类比java的反射
     - super.b 构造函数中访问super父类的静态属性
-    - super['b'] 同上
+    - super[\'b\'] 同上
     - new.target 函数中可以通过此属性判断是否new调用,非new调用返回undefined, new调用返回构造函数
-    - fun`str${var}` 会把字符串模版中分成几部分(str数组,$var列表)作为参数调用fun函数
+    - fun\`str${var}\` 会把字符串模版中分成几部分(str数组,$var列表)作为参数调用fun函数
   - New操作符
     - new Foo
     - new Foo() 优先级更高，即如果后面跟()则把参数传入new的构造函数里
-    - new Foo['b'] 先访问b属性后进行new调用
-    - new Foo()['b'] 先进行Foo()的new调用后进行b属性访问
+    - new Foo[\'b\'] 先访问b属性后进行new调用
+    - new Foo()[\'b\'] 先进行Foo()的new调用后进行b属性访问
   - Left-Hand-Side && Right-Hand-Side (=左右两边)
   - Update
     - a++
-    - a--
-    - --a
+    - a-\-
+    - -\-a
     - ++a
   - Unary
     - delete a.b
@@ -894,11 +887,11 @@ input {
     - -
   - Shift
     - <<
-    - >>
-    - >>>
+    - \>\>
+    - \>\>\>
   - Relationship
     - <= 
-    - >=
+    - \>=
     - instanceof
     - in
   - Equality
@@ -927,7 +920,7 @@ input {
       - Object() new调用和非new调用都一样，都返回一个Object
       - Null和Undefined都不能装箱
     - toString vs valueOf vs Symbol.toPrimitive
-      - 类型转换时如果有[Symbol.toPrimitive](){}则完全按照此函数的返回值进行转换
+      - 类型转换时如果有\[Symbol.toPrimitive\](){}则完全按照此函数的返回值进行转换
       - 否则按照默认的toPrimitive顺序执行
         - 优先valueOf
         - 如果拿不到合适的原始值再调toString
@@ -1106,14 +1099,14 @@ convertNumberToString(100,10)
 ### js结构化程序设计
 #### js引擎
 - js引擎接收js代码的三种方式
-  - 普通的script['src']或内联代码片段
-  - script[type='module']
+  - 普通的script[\'src\']或内联代码片段
+  - script[type=\'module\']
   - setTimeout/setInterval
 - 宏任务
   - 宿主发起的任务称为宏任务
   - 宏任务的队列相当于是事件循环
   - 方式
-    - script
+    - script, html中两个script标签中的代码产生2个宏任务，每个宏任务都要等待其中的微任务执行完才会执行下一个
     - UI交互
     - setTimeout/setInterval
 - 微任务
@@ -1365,12 +1358,30 @@ while(queue.length){
     - 包
     - IP地址
     - libnet/libpcap
+- http标准
+  - http1.1 https://tools.ietf.org/html/rfc2616
+  - https https://tools.ietf.org/html/rfc2818
+  - http2 https://tools.ietf.org/html/rfc7540
 
 #### http
 - Request
   - RequestLine
+    - GET
+    - POST
+    - HEAD
+    - OPTIONS
+    - PUT
+    - DELETE
+    - TRACE
+    - CONNECT
   - Headers
+    - If-None-Match
+    - Cookie
   - Body
+    - application/json
+    - application/x-www-form-urlencoded
+    - multipart/form-data
+    - text/plain
 - Response
   - StatusLine
   - Headers
@@ -1657,7 +1668,29 @@ const server = http.createServer((req,res)=>{
     res.setHeader("Content-Type","text/html");
     res.setHeader("X-Foo","bar");
     res.writeHead(200,{"Content-Type":"text/plain"});
-    res.end("GeekTime");
+    res.end(`
+<html maaa=a >
+<head>
+    <style>
+body div #myid{
+    width:100px;
+    background-color: #ff5000;
+}
+body div img{
+    width:30px;
+    background-color: #ff1111;
+}
+    </style>
+</head>
+<body>
+    <div>
+        <img id="myid"/>
+        <img />
+    </div>
+</body>
+</html>
+
+`);
 })
 
 server.listen(8080,()=>{
@@ -1665,3 +1698,20 @@ server.listen(8080,()=>{
 })
 
 ```
+
+#### html语法词法分析
+- https://html.spec.whatwg.org/multipage/parsing.html
+- 状态机
+  - Mealy
+    - 米利型有限状态机 MealyMachine
+    - 输出基于当前状态和输入
+    - 每个Mealy机都有一个等价的Moore机,该等价的Moore机的状态的数量上限应是对应Mealy机状态数量和输出数量的乘积再加一
+  - Moore
+    - 摩尔型有限状态机 MooreMachine
+    - 输出只依赖当前状态
+- DOM构建
+  - 字符流通过状态机进行分词形成token
+  - token通过栈管理形成DOM
+
+#### css计算/排版/渲染/合成
+- https://time.geekbang.org/column/article/80311
