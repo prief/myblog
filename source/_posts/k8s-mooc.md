@@ -4,9 +4,9 @@ date: 2019-09-09 22:37:42
 tags:
 ---
 
-# k8s快速入门
 
-## 核心概念
+### k8s快速入门
+#### 核心概念
 - kubernetes 舵手
 - image
 - container
@@ -20,7 +20,7 @@ tags:
   - 通过clusterIp暴露服务
 - https://k8s.imroc.io/
 
-## 架构设计
+#### 架构设计
 - master
   - etcd
   - apiServer
@@ -31,7 +31,7 @@ tags:
   - kube-proxy
   - docker
 
-## 认证授权
+#### 认证授权
 - https
   - ssl/tls
   - CA(浏览器的公共CA和自有CA)
@@ -68,7 +68,7 @@ tags:
   - ServiceAccount
   - DenyEscolatingExec
 
-## 集群搭建方案对比
+#### 集群搭建方案对比
 - kubeadm
   - 优雅，几乎所有组件都在pod中
   - 简单
@@ -81,9 +81,9 @@ tags:
   - 升级方便
   - 证书、配置等需要一步步操作
 
-# kubeadm方式搭建
 
-## 环境准备
+### kubeadm方式搭建
+#### 环境准备
 - 统一主机名
   - hostname
   - hostnamectl set-hostname name
@@ -96,7 +96,7 @@ tags:
   - ntpdate ip
 - 主机配置
   - 关闭防火墙 systemctl stop firewalld && systemctl disable firewalld
-  - 关闭swap  swapoff -a && sed -i '/swap/s/^\(.*\)$/# \1/g' /etc/fstab
+  - 关闭swap  swapoff -a && sed -i \'/swap/s/^\(.*\)$/# \1/g\' /etc/fstab
   - 重置iptables iptables -F && iptables -X && iptables -F -t nat && iptables -X -t nat && iptables -P FORWARD ACCEPT && service iptables save
   - 关闭selinux setenforce 0 && sed -i 's/^SELINUX=.*$/SELINUX=disabled/' /etc/selinux/config
   - 关闭dnsmasq systemctl stop dnsmasq && systemctl disable dnsmasq
@@ -152,6 +152,7 @@ EOF
   - 配置yum源
   - yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
   - systemctl enable kubelet && systemctl start kubelet
+  - source <(kubectl completion bash)
 ```
 
 cat << EOF > /etc/yum.repos.d/kubernetes.repo
@@ -189,7 +190,8 @@ docker rmi registry.cn-hangzhou.aliyuncs.com/google_containers/etcd:3.4.3-0
 docker rmi coredns/coredns:1.6.5
 
 ```
-## 高可用部署
+
+#### 高可用部署
 - 实现apiServer的高可用与负载均衡，也可只用keepalived
   - yum install -y socat keepalived haproxy ipvsadm
   - systemctl enable haproxy && systemctl enable keepalived
@@ -307,6 +309,7 @@ backend https_sri
   - kubectl get pods --all-namespaces #测试
 - 部署worker
   - kubeadm join 10.18.3.200:8443 --token XXX --discovery-token-ca-cert-hash XXX
+  - kubeadm token create --print-join-command  #重新生成token
 - 部署网络插件
   - #任意主节点下载配置文件并更改cidr
   - kubectl apply -f calico.yaml
@@ -317,7 +320,8 @@ backend https_sri
   - kubectl get cs
   - kubectl exec -n kube-system etcd-m1 -- etcdctl --cacert="/etc/kubernetes/pki/etcd/ca.crt" --cert="/etc/kubernetes/pki/etcd/peer.crt" --key="/etc/kubernetes/pki/etcd/peer.key" --endpoints=https://10.18.3.178:2379 member list #查看etcd集群
   - journalctl -f #查看日志
-## 可用性测试
+
+#### 可用性测试
 - kubectl apply -f nginx-ds.yaml  
 - ping podIp
 - curl svcIp:svcPort
@@ -403,7 +407,8 @@ kubectl get pod -n kube-system | grep kube-proxy |awk '{system("kubectl delete p
 
 ```
 
-## dashboard
+
+#### dashboard
 - kubectl apply -f dashboard.yaml
 - bash dashboardToken.sh # 默认只支持token登陆
 ```
@@ -411,10 +416,19 @@ kubectl get pod -n kube-system | grep kube-proxy |awk '{system("kubectl delete p
 #!/bin/bash
 kubectl describe secret -n kubernetes-dashboard $(kubectl get secret -n kubernetes-dashboard | grep dashboard-token | awk '{print $1}') | grep -E '^token' | awk '{print $2}'
 
+
+# gen-ingress-secret.sh
+openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout ingress.test.com.key -out ingress.test.com.pem -subj "/CN=ingress.test.com"
+
+kubectl create secret tls ingress-secret  --cert ingress.test.com.pem --key ingress.test.com.key
+
+kubectl  get secret -n kube-system | grep ingress
+
 ```
 
-# 二进制方式搭建
-## 环境准备
+
+### 二进制方式搭建
+#### 环境准备
 - 统一主机名
   - hostname
   - hostnamectl set-hostname name
@@ -509,7 +523,8 @@ ssh-copy-id .ssh/id_rsa.pub user@ip
   - echo "PATH=$PATH:/opt/k8s/bin" >> ~/.bashrc
 - 配置各服务参数
 
-## 高可用部署
+
+#### 高可用部署
 - CA证书
   - 安装工具，cfssl非常好用的CA工具，用来生成证书和密钥文件
   - 生成根证书，后续所有的证书都由根证书签名
@@ -801,7 +816,7 @@ journalctl -f -u kube-proxy
   - calico
   - coredns
 
-## 可用性测试
+#### 可用性测试
 - kubectl apply -f nginx-ds.yaml
 - ping podIp
 - curl svcIp:svcPort
@@ -886,7 +901,8 @@ lsmod | grep -e ip_vs -e nf_conntrack_ipv4
 kubectl get pod -n kube-system | grep kube-proxy |awk '{system("kubectl delete pod "$1" -n kube-system")}'
 
 ```
-## dashboard
+
+#### dashboard
 - kubectl apply -f dashboard.yaml
 - bash dashboardToken.sh # 默认只支持token登陆
 ```
@@ -895,8 +911,9 @@ kubectl get pod -n kube-system | grep kube-proxy |awk '{system("kubectl delete p
 kubectl describe secret -n kubernetes-dashboard $(kubectl get secret -n kubernetes-dashboard | grep dashboard-token | awk '{print $1}') | grep -E '^token' | awk '{print $2}'
 
 ```
-# 业务迁移到k8s
-## harbor
+
+### 业务迁移到k8s
+#### harbor
 - 采用比较简单的高可用方案
   - nginx做负载均衡
   - harbor原生安装方式部署2个节点提供服务
@@ -949,7 +966,7 @@ docker run -itd --net=host --name harbornginx -v /root/harbor/nginx.conf:/etc/ng
   - 报错https则在/etc/docker/daemon.json中添加insecure-registries:["域名"]并重启docker
   - 配置harbor的同步规则，使2个仓库进行实时同步
 
-## 服务发现
+#### 服务发现
 - 集群内相互访问
   - ClusterIPService通过DNS把name解析成CluseterIP访问集群pod
   - 客户端通过headlessService拿到集群endpoints然后客户端自己实现
@@ -962,8 +979,283 @@ docker run -itd --net=host --name harbornginx -v /root/harbor/nginx.conf:/etc/ng
   - Ingress
     - Ingress(host+path到service的配置信息)
     - IngressController(Ingress-nginx)
-## 部署ingress-nginx
+
+#### 部署ingress-nginx
 - wget https://raw.githubusercontent.com/kubernetes/ingress-nginx/nginx-0.27.0/deploy/static/mandatory.yaml
+
+```
+# ingress-mandatory.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: nginx-configuration
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: tcp-services
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: udp-services
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nginx-ingress-serviceaccount
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: nginx-ingress-clusterrole
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+      - endpoints
+      - nodes
+      - pods
+      - secrets
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - services
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+  - apiGroups:
+      - "extensions"
+      - "networking.k8s.io"
+    resources:
+      - ingresses
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - "extensions"
+      - "networking.k8s.io"
+    resources:
+      - ingresses/status
+    verbs:
+      - update
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  name: nginx-ingress-role
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+      - pods
+      - secrets
+      - namespaces
+    verbs:
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    resourceNames:
+      # Defaults to "<election-id>-<ingress-class>"
+      # Here: "<ingress-controller-leader>-<nginx>"
+      # This has to be adapted if you change either parameter
+      # when launching the nginx-ingress-controller.
+      - "ingress-controller-leader-nginx"
+    verbs:
+      - get
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - create
+  - apiGroups:
+      - ""
+    resources:
+      - endpoints
+    verbs:
+      - get
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  name: nginx-ingress-role-nisa-binding
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: nginx-ingress-role
+subjects:
+  - kind: ServiceAccount
+    name: nginx-ingress-serviceaccount
+    namespace: ingress-nginx
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: nginx-ingress-clusterrole-nisa-binding
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: nginx-ingress-clusterrole
+subjects:
+  - kind: ServiceAccount
+    name: nginx-ingress-serviceaccount
+    namespace: ingress-nginx
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-ingress-controller
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/part-of: ingress-nginx
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ingress-nginx
+      app.kubernetes.io/part-of: ingress-nginx
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ingress-nginx
+        app.kubernetes.io/part-of: ingress-nginx
+      annotations:
+        prometheus.io/port: "10254"
+        prometheus.io/scrape: "true"
+    spec:
+      # wait up to five minutes for the drain of connections
+      terminationGracePeriodSeconds: 300
+      serviceAccountName: nginx-ingress-serviceaccount
+      hostNetwork: true
+      nodeSelector:
+        ingressController: "true"
+      # tolerations: #增加容忍，可分配到master节点
+      # - key: "node-role.kubernetes.io/master"
+        # operator: "Exists"
+        # effect: "NoSchedule"
+      containers:
+        - name: nginx-ingress-controller
+          image: registry.cn-hangzhou.aliyuncs.com/google_containers/nginx-ingress-controller:0.24.1
+          args:
+            - /nginx-ingress-controller
+            - --configmap=$(POD_NAMESPACE)/nginx-configuration
+            - --tcp-services-configmap=$(POD_NAMESPACE)/tcp-services
+            - --udp-services-configmap=$(POD_NAMESPACE)/udp-services
+            - --publish-service=$(POD_NAMESPACE)/ingress-nginx
+            - --annotations-prefix=nginx.ingress.kubernetes.io
+            - --http-port=80 #默认80
+            - --https-port=433 #默认443
+          securityContext:
+            allowPrivilegeEscalation: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_BIND_SERVICE
+            # www-data -> 33
+            runAsUser: 33
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          ports:
+            - name: http
+              containerPort: 80
+            - name: https
+              containerPort: 433
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthz
+              port: 10254
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /healthz
+              port: 10254
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /wait-shutdown
+
+```
 - kubectl apply -f ingress-nginx-mandatory.yaml
 - kubectl get all -n ingress-nginx
 - wget https://raw.githubusercontent.com/kubernetes/ingress-nginx/nginx-0.27.0/deploy/static/provider/baremetal/service-nodeport.yaml
@@ -973,74 +1265,169 @@ docker run -itd --net=host --name harbornginx -v /root/harbor/nginx.conf:/etc/ng
 - kubectl get all -n ingress-nginx
 - kubectl apply -f ingress-demo.yaml #测试
 ```
+# ingress-demo.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tomcat-demo
+  name: nginx-static
 spec:
   selector:
     matchLabels:
-      app: tomcat-demo
+      name: nginx-static
   replicas: 1
   template:
     metadata:
       labels:
-        app: tomcat-demo
+       name: nginx-static
     spec:
       containers:
-      - name: tomcat-demo
-        image: tomcat:8.0.51-alpine
-        ports:
-        - containerPort: 8080
+       - name: nginx-static
+         image: nginx:latest
+         volumeMounts:
+          - mountPath: /etc/localtime
+            name: vol-localtime
+            readOnly: true
+         ports:
+          - containerPort: 80
+            name: http
+      volumes:
+         - name: vol-localtime
+           hostPath:
+            path: /etc/localtime
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: tomcat-demo
+  name: nginx-static
+  labels:
+   name: nginx-static
 spec:
-  selector:
-    app: tomcat-demo
   ports:
   - port: 80
     protocol: TCP
-    targetPort: 8080
-    
+    targetPort: 80
+    name: http
+  selector:
+    name: nginx-static
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: tomcat-demo
+  name: submodule-checker-ingress
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
 spec:
   rules:
-  - host: tomcat.test.com
+  - host: ingress.ceair.com
     http:
       paths:
-      - path: /
+      - path:
         backend:
-          serviceName: tomcat-demo
+          serviceName: nginx-static
           servicePort: 80
 
 ```
-## 定时任务迁移
-## springboot迁移
-## dubbo迁移
-## 传统web迁移
-# cicd
-## git
-## maven
-## docker build
-## harbor
-## 服务发布
-## 健康检查
-# 重要资源对象
-## namespace
-## resources
-## label
-# 调度与编排
-## 健康检查
-## scheduler
-## 部署策略
-## pod
+
+#### 业务迁移实施步骤
+- 做基础镜像
+- 通过Dockerfile做业务镜像
+- 通过yaml文件做调度
+
+
+### 重要资源对象
+#### namespace
+- 集群的共享和隔离
+  - 只是逻辑隔离
+  - 对serviceName可以通过/etc/resolve.conf隔离，对serviceIp/podIp无法隔离
+- 隔离
+  - 资源对象的隔离
+    - service
+    - deployment
+    - pod
+  - 资源配额的隔离
+    - cpu
+    - memory
+- 切换默认命名空间
+  - kubectl config set-context ctx-dev --cluster=kubernetes --user=admin --namespace=dev --kubeconfig=/root/.kube/config
+  - kubectl config use-context ctx-dev --kubeconfig=/root/.kube/config
+  - kubectl get all
+  - 想完全隔离命名空间下的资源需要创建不同的user并做不同的绑定
+- 划分方式
+  - 按环境划分: dev/test
+  - 按项目划分: pr1/pr2
+  - 多维度划分: pr1-dev/pr2-test
+
+#### resources
+- 内容
+  - cpu
+  - memory
+  - gpu
+  - persistantStorage
+- 核心设计
+  - requests(最低要求)
+    - memory: 100Mi(Mi|Gi分别为M|G)
+    - cpu: 100m(1核心=1000m)
+  - limits(最高限额)
+    - memery: 100Mi
+    - cpu: 200m
+- 当pod内有进程占用内存比较大超过limits限制，pod会尝试杀掉占用内存大的进程，因为内存是不可压缩资源，只能杀掉
+- 当pod内有进程占用cpu比较多超过limits限制，docker最多可分配limits的cpu给容器，而不会杀掉pod，因为cpu是可压缩资源
+- 服务等级
+  - 如果requests与limits相等，此类型服务等级比较高
+  - 如果没有配置requests和limits，此类型服务等级低，遇到资源竞争时首先杀掉此类型的资源
+  - 如果limits大于request，则按需分配
+- 资源管控(保证系统的稳定性)
+  - k8s使用LimitRange管理pod/container的resource使用范围
+  - k8s使用ResourceQuota管理namespaces/configmaps/services等资源的数量限制
+  - k8s使用eviction进行资源不足时的pod驱逐
+    - 策略
+      - --eviction-soft=memory.available<1.5Gi
+      - --eviction-soft-grace-period=memory.avaiilable=1m30s
+      - --eviction-hard=memory.available<100Mi,nodefs.available<1Gi,nodefs.inodesFree<5%
+    - 磁盘紧缺时
+      - 删除死掉的pod
+      - 删除没用的镜像
+      - 按优先级、资源占用情况驱逐pod
+    - 内存紧缺时
+      - 驱逐不可靠的pod
+      - 驱逐基本可靠的pod
+      - 驱逐可靠的pod
+
+#### label
+- 本质就是key=value
+- 使用方式
+  - 选择器
+    - selector
+    - nodeSelector
+  - 匹配方式
+    - matchLabels
+    - matchExpressions
+      - key
+      - operator
+      - value
+  - 命令行
+    - \-l
+- 不同的deployment的同label的pod是分开的，但service不会分开   
+
+### 调度与编排
+#### 健康检查
+- 方式
+  - livnessProbe
+  - readinessProbe
+- 配置
+  - exec|httpGet|tcpSocket
+  - initialDelaySeconds
+  - periodSeconds
+  - failureThreshold
+  - successThreshold
+  - timeoutSeconds
+  
+#### scheduler
+#### 部署策略
+#### pod
+
+
+
 # 落地实践
 ## ingress
 ## 共享存储pv/pvc/sc
