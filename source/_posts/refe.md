@@ -1701,17 +1701,33 @@ server.listen(8080,()=>{
 
 #### html语法词法分析
 - https://html.spec.whatwg.org/multipage/parsing.html
-- 状态机
-  - Mealy
-    - 米利型有限状态机 MealyMachine
-    - 输出基于当前状态和输入
-    - 每个Mealy机都有一个等价的Moore机,该等价的Moore机的状态的数量上限应是对应Mealy机状态数量和输出数量的乘积再加一
-  - Moore
-    - 摩尔型有限状态机 MooreMachine
-    - 输出只依赖当前状态
+- 状态机FSM
+  - Finite State Machine
+  - 就是状态在不同条件下跳转到自己或不同状态的状态转移图
+    - 每一个状态都是一个机器，不是变量
+      - 在每一个机器里可以做计算、存储、输出...
+      - 所有这些机器接收的输入是一致的，参数一致
+      - 所有这些机器本身没有状态，如果用函数来表示则应该是纯函数
+    - 每一个状态知道下一个状态
+      - Moore有确定的下一个状态
+      - Mealy根据输入决定下一个状态
+  - 四要素
+    - 现态
+    - 条件
+    - 动作
+    - 次态
+  - 两大类
+    - Mealy
+      - 米利型有限状态机 MealyMachine
+      - 输出依赖状态和输入
+      - 每个Mealy机都有一个等价的Moore机,该等价的Moore机的状态的数量上限应是对应Mealy机状态数量和输出数量的乘积再加一
+    - Moore
+      - 摩尔型有限状态机 MooreMachine
+      - 输出只依赖状态，不依赖输入
 - DOM构建
   - 字符流通过状态机进行分词形成token
   - token通过栈管理形成DOM
+- https://github.com/prief/toy-browser
 
 #### css计算/排版/渲染/合成
 - https://time.geekbang.org/column/article/80311
