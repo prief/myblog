@@ -1423,19 +1423,102 @@ spec:
   - timeoutSeconds
   
 #### scheduler
+- 调度策略
+  - 预选策略
+    - predicate
+    - 硬性指标不符合的都排除，剩下的可调度
+  - 优选策略
+    - priority
+    - 在可调度的节点上进行评分，选择最高分进行node和pod的绑定
+- 亲和性
+  - affinity
+    - nodeAffinity
+      - requiredXXX 必须满足
+      - preferredXXX 最好满足
+    - podAffinity
+      - requiredXXX
+      - preferredXXX
+    - nodeAntiAffinity
+      - requiredXXX
+      - preferredXXX
+    - podAntiAffinity
+      - requiredXXX
+      - preferredXXX
+- 污点
+  - node打上污点，除非pod显示声明容忍，否则不可匹配
+  - tolerations 污点容忍
+    - key
+    - operator
+    - value
+    - effect
+  - 污点构成
+    - key
+    - value
+    - effect
+      - NoSchedule #后面的pod不会调度过来，不影响已有的
+      - PreferNoSchedule
+      - NoExecute #如有已经调度的则会根据容忍时间进行驱逐
+  - kubectl taint node NAME key=value:effect
+
 #### 部署策略
+- 重建
+  - Deployment.spec.strategy.type=Recreate
+  - 服务先停止后重建，会影响线上服务
+  - 适用于快速删除一批pod并重建
+- 滚动更新 RollingUpdate
+  - Deployment.spec.strategy.type=RollingUpdate
+  - Deployment.spec.strategy.rollingUpdate.maxSurge=25% #滚动更新时最多新创建数量，默认25%
+  - Deployment.spec.startegy.rollingUpdate.maxUnavailable=25% #滚动更新时最多不可用数量，默认25%
+  - kubectl rollout pause deploy NAME #暂停滚动更新
+  - kubectl rollout resume deploy NAME #恢复滚动更新
+  - kubectl rollout undo deploy NAME #回退滚动更新
+- 蓝绿部署
+  - 网络入口ingress/service不变，部署不同的deployment实现蓝绿
+  - 通过切割service的selector完成切换
+- 金丝雀部署
+  - 在蓝绿的基础上，service接入不同版本的deployment，实现流量按比例分配
+
 #### pod
+- 设计思想
+  - 容器是单进程模型，一个容器尽量只跑一个服务
+  - pod是个逻辑概念，本质上还是容器的隔离
+  - pod通过第一个pause容器解决了容器依赖的问题
+  - pod是共享网络/存储/hosts文件的一组容器，是k8s最小的调度单位
+  - hosts文件是通过pod.spec.hostAliases.ip和pod.spec.hostAliases.hostnames配置
+  - pod可以通过配置pod.spec.hostNetwork和pod.spec.hostPID配置pod是否使用主机的相关信息
+  - pod里的容器可以配置生命周期钩子函数
+    - pod.spec.containers[0].lifecycle.postStart.exec # 和entrypoint并行
+    - pod.spec.containers[0].lifecycle.preStop.exec # 串行，执行完钩子后退出容器
+- 生命周期
+  - Pendding
+  - ContainerCreating
+  - Running
+  - Ready
+  - Succeeded
+  - Failed
+  - CrashLoopBackOff
+  - Unknown
+- ProjectedVolume
+  - 在pod运行时需要的文件可以通过apiServer把ProjectedVolume投射进来
+  - 常见使用
+    - Secret
+    - ConfigMap
+    - DownwardAPI
 
+### 日志和监控
+#### 日志方案
+- 问题
+  - 容器的stdout/stderr默认保存在/var/lib/docker/cantainers/NAME/NAME-json.log
+  - pod重启后应用的日志文件会丢失
+- 常见方案
+  - 远程日志，应用直接对接远程日志
+  - sidecar，pod内专门的一个容器转发日志，性能较低
+  - logAgent，通常是ds部署在主机上，转发所有pod的日志，需要日志文件挂载到主机
+- 实践 
+  - logPilot作为logAgent的一种智能采集工具
+  - logPilot + elasticSearch + kibana
 
-
-# 落地实践
-## ingress
-## 共享存储pv/pvc/sc
-## statefulset
-## k8sApi
-# 日志和监控
-## 日志方案
-## 监控入门
+#### 监控入门
 ## 部署实战
 ## 监控落地
 # istio
