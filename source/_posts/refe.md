@@ -693,6 +693,15 @@ for (let i = 0; i < byteCharacters.length; i++) {
 const array = Uint8Array.from(byteNumbers);
 const blob = new Blob([array], {type: 'image/png'});  
 
+// blob下载
+function download(blob,name){
+    const a = document.createElement("a");
+    const url = URL.createObjectURL(blob)
+    a.href = url;
+    a.download = name;
+    a.style.display = "none";
+    a.click();
+}
 
 // ArrayBuffer转成文件上传
 // 在浏览器中，每个字节以十进制的方式存在
@@ -1724,6 +1733,17 @@ server.listen(8080,()=>{
     - Moore
       - 摩尔型有限状态机 MooreMachine
       - 输出只依赖状态，不依赖输入
+- 字符串查找问题解法(文本串长度N,模式串长度M)
+  - BF
+    - BruteForce暴力解法
+    - 时间复杂度O(M*N) 空间复杂度O(1)
+    - 双层循环
+  - KMP
+    - 三位发明者名字首字母
+    - 时间复杂度O(N) 空间复杂度O(M)
+    - http://www.ruanyifeng.com/blog/2013/05/Knuth–Morris–Pratt_algorithm.html
+    - KMP的关键是通过M串计算出部分匹配表PMT(PartialMatchTable)，每次不匹配时M串移动位数=已匹配的字符数 - 最后一位匹配字符对应PMT的部分匹配值
+    - 部分匹配值是前缀和后缀子串中最长的共有元素的长度
 - DOM构建
   - 字符流通过状态机进行分词形成token
   - token通过栈管理形成DOM
