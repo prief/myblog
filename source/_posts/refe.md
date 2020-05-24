@@ -1750,4 +1750,72 @@ server.listen(8080,()=>{
 - https://github.com/prief/toy-browser
 
 #### css计算/排版/渲染/合成
-- https://time.geekbang.org/column/article/80311
+- specificity
+  - 行内样式
+  - id
+  - class
+  - tag
+- 布局模型四代发展过程
+  - normalFlow
+  - flex
+    - flex-container
+      - flex-direction
+      - flex-wrap 
+      - flex-flow 是flex-direction属性和flex-wrap的简写,默认row nowrap
+      - justify-content
+      - align-items 
+      - align-content 交叉轴上有wrap即多行的对齐方式
+    - flex-item
+      - flex-grow
+      - flex-shrink
+      - flex-basis
+      - flex  默认 0 1 auto,对应grow shrink basis
+      - order 默认为0,越小越靠前
+      - align-self 允许单个项目定义与其他项目不一样的对齐方式
+  - grid
+  - houdini
+- https://github.com/prief/toy-browser
+
+
+### 重学css
+- https://www.w3.org/TR/CSS21/grammar.html
+- 总体结构
+  - @rule
+    - @charset
+    - @import
+    - @media
+    - @page
+    - @namespace
+    - @supports
+    - @document
+    - @font-face
+    - @keyframes
+    - @viewport
+    - @counter-style
+  - rules
+    - selector
+      - selector_group
+      - combinator
+      - simple_selector
+        - type
+        - \*
+        - #
+        - \.
+        - \[\]
+        - :
+        - ::
+    - declaration
+      - key
+        - properties
+        - variables
+          - \-\-text-color: red;
+          - color: var(--text-color);
+      - value
+- 兼容性问题解决思路
+  - 开发手上保证测试机
+  - 测试阶段保证TOP10
+  - 发布前保证TOP30
+  - 重点功能发布前保证TOP100
+- 前端3D引擎
+  - three.js
+  - babylon.js
