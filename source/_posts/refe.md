@@ -1396,318 +1396,6 @@ while(queue.length){
   - Headers
   - Body
 
-```
-// client.js
-const net = require("net");
-
-class Request {
-    constructor(options){
-        this.method = options.method || "GET";
-        this.host = options.host || "localhost";
-        this.port = options.port || 8080;
-        this.path = options.path || "/";
-        this.headers = options.headers || {};
-        this.body = options.body || {};
-
-        if(!this.headers["Content-Type"]){
-            this.headers["Content-Type"] = "application/x-www-form-urlencoded"
-        }
-
-        if(this.headers["Content-Type"] == "application/json"){
-            this.bodyText = JSON.stringify(this.body)
-        }else if(this.headers["Content-Type"] =="application/x-www-form-urlencoded"){
-            this.bodyText = Object.keys(this.body).map(k=>encodeURIComponent(k) +"="+encodeURIComponent(this.body[k])).join("&")
-        }
-        this.headers["Content-Length"] = this.bodyText.length;
-
-    }
-
-    toString(){
-        return `${this.method} ${this.path} HTTP/1.1\r
-${Object.keys(this.headers).map(k=>`${k}: ${this.headers[k]}`).join("\r\n")}\r
-\r
-${this.bodyText}`
-    }
-
-    send(conn){
-        return new Promise((res,rej)=>{
-            let parser = new ResponseParser();
-            if(conn){
-                conn.write(this.toString())
-            }else{
-                conn = net.createConnection({
-                    host:this.host,
-                    port:this.port
-                },()=>{
-                    conn.write(this.toString())
-                })
-            }
-
-            conn.on("data",(data)=>{
-                parser.receive(data.toString());
-
-                if(parser.isFinished){
-                    res(parser.response)
-                }
-
-                // console.log(parser.statusLine);
-                // console.log(parser.headers);
-                // res(data.toString())
-                conn.end();
-            })
-            conn.on("end",()=>{
-                console.log("disconnected from server")
-            })
-            conn.on("error",(error)=>{
-                rej(error);
-                conn.end();
-            })
-        })
-        
-    }   
-}
-
-class ResponseParser {
-    constructor(){
-        this.WAITING_STATUS_LINE = 0;
-        this.WAITING_STATUS_LINE_END = 1;
-        this.WAITING_HEADER_NAME = 2;
-        this.WAITING_HEADER_SPACE = 3;
-        this.WAITING_HEADER_VALUE = 4;
-        this.WAITING_HEADER_LINE_END = 5;
-        this.WAITING_HEADER_BLOCK_END = 6;
-        this.WAITING_BOBY = 7;
-
-        this.current = this.WAITING_STATUS_LINE;
-        this.statusLine = "";
-        this.headers = {};
-        this.headerName = "";
-        this.headerValue = "";
-
-        this.bodyParser = null;
-    }
-
-    get isFinished(){
-        return this.bodyParser && this.bodyParser.isFinished;
-    }
-     
-    get response(){
-        this.statusLine.match(/HTTP\/1.1 (\d+) ([\s\S]+)/);
-        return {
-            statusCode:RegExp.$1,
-            statusText:RegExp.$2,
-            headers:this.headers,
-            body:this.bodyParser.content.join("")
-        };
-    }
-
-    receive(string){
-        for(let i = 0;i<string.length;i++){
-            this.receiveChar(string.charAt(i));
-        }
-    }
-
-    receiveChar(char){
-        if(this.current == this.WAITING_STATUS_LINE){
-            if(char === "\r"){
-                this.current =  this.WAITING_STATUS_LINE_END;
-            }else{
-                this.statusLine += char;
-            }
-        }else if(this.current ==  this.WAITING_STATUS_LINE_END){
-            if(char === "\n"){
-                this.current =  this.WAITING_HEADER_NAME;
-            }
-        }else if(this.current ==  this.WAITING_HEADER_NAME){
-            if(char =="\r"){
-                this.current = this.WAITING_HEADER_BLOCK_END;
-                if(this.headers["Transfer-Encoding"] === "chunked"){
-                    this.bodyParser = new TrunkedBodyParser();
-                }
-            }else if(char == ":"){
-                this.current = this.WAITING_HEADER_SPACE;
-            }else{
-                this.headerName += char;
-            }
-        }else if(this.current == this.WAITING_HEADER_SPACE){
-            if(char == " "){
-                this.current = this.WAITING_HEADER_VALUE;
-            }
-        }else if(this.current == this.WAITING_HEADER_VALUE){
-            if(char == "\r"){
-                this.current = this.WAITING_HEADER_LINE_END;
-                this.headers[this.headerName] = this.headerValue;
-                this.headerName = "";
-                this.headerValue = "";
-            }else{
-                this.headerValue += char;
-            }
-        }else if( this.current == this.WAITING_HEADER_LINE_END){
-            if(char === "\n"){
-                this.current = this.WAITING_HEADER_NAME;
-            }
-        }else if(this.current == this.WAITING_HEADER_BLOCK_END){
-            if(char === "\n"){
-                this.current = this.WAITING_BOBY;
-            }
-        }else if(this.current  == this.WAITING_BOBY){
-            this.bodyParser.receiveChar(char)
-        }
-    }
-}
-
-class TrunkedBodyParser {
-    constructor(){
-        this.WAITING_LENGTH = 0;
-        this.WAITING_LENGTH_LINE_END = 1;
-        this.READING_TRUNK = 2;
-        this.WAITING_NEW_LINE = 3;
-        this.WAITING_NEW_LINE_END =4;
-
-        this.length = 0;
-        this.content = [];
-        this.isFinished = false;
-
-        this.current = this.WAITING_LENGTH;
-    }
-
-    receiveChar(char){
-        // console.log(JSON.stringify(char))
-        if(this.current == this.WAITING_LENGTH){
-            if(char == "\r"){
-                if(this.length == 0){
-                    // console.log(this.content)
-                    this.isFinished = true;
-                }
-                this.current = this.WAITING_LENGTH_LINE_END;
-            }else{
-                this.length *= 10;
-                this.length += char.charCodeAt(0) - '0'.charCodeAt(0);
-            }
-        }else if(this.current == this.WAITING_LENGTH_LINE_END){
-            if(char == "\n"){
-                this.current = this.READING_TRUNK
-            }
-        }else if(this.current == this.READING_TRUNK){
-            if(this.length >0){
-                this.content.push(char);
-            }
-            this.length--;
-            if(this.length ==0 ){
-                this.current = this.WAITING_NEW_LINE;
-            }
-        }else if(this.current == this.WAITING_NEW_LINE){
-            if(char == "\r"){
-                this.current = this.WAITING_NEW_LINE_END;
-            }
-        }else if(this.current == this.WAITING_NEW_LINE_END){
-            if(char == "\n"){
-                this.current = this.WAITING_LENGTH;
-            }
-        }
-
-
-
-    }
-
-}
-
-
-void async function(){
-    let request = new Request({
-        method:"GET",
-        host:"localhost",
-        port:8080,
-        path:"/",
-        headers:{
-            "geek":"time"
-        },
-        body:{
-            name:"GeekTime"
-        }
-    })
-    let res = await request.send();
-    console.log(res);
-}();
-
-// const client = net.createConnection({
-//     host:"localhost",
-//     port:8080
-// },()=>{
-//     console.log("connected to server");
-//     // client.write("GET / HTTP/1.1\r\n");
-//     // client.write("\r\n")
-
-//     let request = new Request({
-//         method:"GET",
-//         host:"localhost",
-//         port:8080,
-//         path:"/",
-//         headers:{
-//             "geek":"time"
-//         },
-//         body:{
-//             name:"GeekTime"
-//         },
-
-//     })
-
-//     console.log(request.toString())
-//     client.write(request.toString())
-// })
-
-// client.on("data",(data)=>{
-//     console.log("on data \r\n",data.toString())
-//     client.end();
-// })
-// client.on("end",()=>{
-//     console.log("disconnected from server")
-// })
-
-
-
-
-// server.js
-const http = require("http");
-
-const server = http.createServer((req,res)=>{
-    console.log("server received a request");
-    console.log(req.headers);
-    
-    res.setHeader("Content-Type","text/html");
-    res.setHeader("X-Foo","bar");
-    res.writeHead(200,{"Content-Type":"text/plain"});
-    res.end(`
-<html maaa=a >
-<head>
-    <style>
-body div #myid{
-    width:100px;
-    background-color: #ff5000;
-}
-body div img{
-    width:30px;
-    background-color: #ff1111;
-}
-    </style>
-</head>
-<body>
-    <div>
-        <img id="myid"/>
-        <img />
-    </div>
-</body>
-</html>
-
-`);
-})
-
-server.listen(8080,()=>{
-    console.log("server is running...")
-})
-
-```
-
 #### html语法词法分析
 - https://html.spec.whatwg.org/multipage/parsing.html
 - 状态机FSM
@@ -1747,6 +1435,25 @@ server.listen(8080,()=>{
 - DOM构建
   - 字符流通过状态机进行分词形成token
   - token通过栈管理形成DOM
+- toy-browser
+  - 拆分parser文件，接收html返回DOM
+  - 创建状态机
+  - 解析标签
+    - 开始标签
+    - 结束标签
+    - 自闭合标签
+  - 创建元素
+    - 在标签结束状态提交token
+  - 处理属性
+    - 属性值分为单引号、双引号、无引号
+    - 属性值结束时把属性加到标签token上
+  - 构建DOM
+    - 构建DOM树的基本技巧是使用栈
+    - 开始标签时创建元素并入栈，结束标签时出栈
+    - 自闭合标签可以视为入栈后即刻出栈
+    - 任何元素的父元素时入栈前的栈顶
+  - 文本节点
+    - 多个文本节点需要合并
 - https://github.com/prief/toy-browser
 
 #### css计算/排版/渲染/合成
@@ -1774,6 +1481,43 @@ server.listen(8080,()=>{
       - align-self 允许单个项目定义与其他项目不一样的对齐方式
   - grid
   - houdini
+- toy-browser
+  - 收集css规则
+    - 遇到style标签把css规则保存起来
+    - 调用css这个node库分析css
+  - 添加调用
+    - DOM解析时创建了一个元素后，立即计算css
+    - 理论上，分析一个元素时所有的css规则已经收集完毕
+    - 真实环境中可能有元素内直接写style属性的，这里忽略
+  - 获取父元素序列
+    - 在computeCSS中，必须知道父元素序列才能进行选择器是否匹配的判断
+    - 因为我们在计算时获取的就是当前元素，所以计算父元素的匹配顺序是从内向外
+  - 拆分选择器
+    - 选择器也要从当前元素向外排列
+    - 复杂选择器拆成单个元素的选择器，用循环进行匹配
+  - 计算选择器与元素是否匹配，实现match函数
+    - 根据元素属性和选择器类型进行计算是否匹配
+    - 这里只实现了3个基本选择器
+  - 生成computed属性
+    - 一旦选择器匹配，就应用选择器到此元素上，形成computedStyle
+  - 确定规则覆盖关系
+    - css根据specificity和后来优先规则覆盖
+    - specificity是个四元组，代表不同权重
+  - 实现flex，收集元素进行
+    - 根据主轴尺寸进行分行
+    - 若设置了no-wrap则强制一行
+  - 计算主轴
+    - 找出所有flex元素
+    - 按比例分配
+    - 若剩余空间为负，则所有flex元素为0，等比压缩剩余元素
+  - 计算交叉轴
+    - 根据每一行最大元素尺寸计算行高
+    - 根据行高的flex-align和item-align确定元素具体位置
+  - 绘制单个元素
+    - 采用npm包images
+  - 绘制DOM
+    - 实际浏览器中文字绘制需要依赖字体库
+    - 实际浏览器中对一些图层做compositing
 - https://github.com/prief/toy-browser
 
 
